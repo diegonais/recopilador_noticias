@@ -1,0 +1,11 @@
+.git
+.gitignore
+.idea
+.vscode
+node_modules
+docker-compose.yml
+storage/cache/*
+storage/logs/*
+!storage/logs/update.log
+*.tmp
+*.temp

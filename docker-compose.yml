@@ -1,0 +1,10 @@
+services:
+  portal-noticias-abi:
+    build:
+      context: .
+    container_name: portal-noticias-abi
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./:/var/www/html
+    restart: unless-stopped

@@ -1,0 +1,19 @@
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.idea/
+.vscode/
+
+# Cache y temporales
+storage/cache/*
+!storage/cache/.gitkeep
+*.tmp
+*.temp
+
+# Logs locales opcionales
+*.log.bak
+
+.env
