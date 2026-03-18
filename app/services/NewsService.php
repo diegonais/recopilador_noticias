@@ -20,8 +20,8 @@ class NewsService
     public function mergeNews(array $existingNews, array $incomingNews)
     {
         $merged = array_merge(
-            $this->normalizeCollection($incomingNews),
-            $this->normalizeCollection($existingNews)
+            $this->normalizeCollection($existingNews),
+            $this->normalizeCollection($incomingNews)
         );
 
         $merged = $this->deduplicateAndSort($merged);

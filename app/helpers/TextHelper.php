@@ -58,11 +58,16 @@ class TextHelper
         }
 
         $patterns = array(
-            '/\s*La entrada .*? se publicó primero en ABI\.?$/u',
-            '/\s*La entrada .*? se publico primero en ABI\.?$/u',
+            '/\s*La entrada .*? se public(?:Ã³|ó) primero en ABI\.?$/u',
+            '/\s*Navegaci(?:Ã³|ó)n de entradas.*$/u',
         );
 
-        return trim((string) preg_replace($patterns, '', $text));
+        $cleaned = preg_replace($patterns, '', $text);
+        $cleaned = self::normalizeWhitespace((string) $cleaned);
+        $cleaned = preg_replace('/\s*(?:\/\/\/|\/\/)[A-Za-z]{2,5}(?:\/\/\/|\/\/)\s*$/u', '', $cleaned);
+        $cleaned = preg_replace('/\s*[A-Za-z]{2,5}(?:\/[A-Za-z]{2,5})+\s*$/u', '', $cleaned);
+
+        return trim((string) $cleaned);
     }
 
     private static function length($text)
