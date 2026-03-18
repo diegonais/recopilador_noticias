@@ -1,13 +1,12 @@
 <?php
 
-require_once __DIR__ . '/../app/config/config.php';
-require_once __DIR__ . '/../app/helpers/DateHelper.php';
-require_once __DIR__ . '/../app/helpers/TextHelper.php';
-require_once __DIR__ . '/../app/helpers/ResponseHelper.php';
-require_once __DIR__ . '/../app/services/StorageService.php';
-require_once __DIR__ . '/../app/controllers/NewsController.php';
+declare(strict_types=1);
 
-$storageService = new StorageService();
-$controller = new NewsController($storageService);
+use PortalNoticias\Shared\Support\JsonResponder;
 
-$controller->index();
+$container = require __DIR__ . '/../bootstrap/app.php';
+
+JsonResponder::send(
+    $container->listNewsUseCase()->execute($container->config()->maxNewsItems())
+);
+

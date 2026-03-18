@@ -1,15 +1,47 @@
 # Portal Noticias ABI
 
-Portal web simple en PHP puro que consume el RSS oficial de la Agencia Boliviana de Informacion (ABI), procesa las noticias y las almacena localmente en `storage/news.json` o en Supabase para servirlas desde una API liviana y mostrarlas en una interfaz responsive.
+Portal web en PHP 8.2 que consume el RSS oficial de la Agencia Boliviana de Informacion (ABI), normaliza y deduplica noticias, las almacena en JSON local o en Supabase y las expone mediante una API liviana y una interfaz responsive.
 
-## Objetivo
+## Estructura
 
-- Obtener noticias del RSS oficial de ABI.
-- Normalizar y deduplicar la informacion.
-- Guardar el resultado localmente en JSON o en Supabase.
-- Exponer las noticias mediante `api/news.php`.
-- Mostrar el contenido en `public/index.php`.
-- Actualizar la informacion cada 10 minutos con un script ejecutable por cron.
+```text
+api/
+  news.php
+bin/
+  update-news.php
+  migrate-news-to-supabase.php
+bootstrap/
+  app.php
+  autoload.php
+public/
+  index.php
+  news.php
+  assets/
+scripts/
+  update_news.php
+  migrate_news_to_supabase.php
+src/
+  News/
+    Application/
+    Domain/
+    Infrastructure/
+  Shared/
+    Config/
+    Http/
+    Infrastructure/
+    Support/
+storage/
+```
+
+## Criterio de arquitectura
+
+- `Application`: casos de uso orquestados, sin detalles de infraestructura.
+- `Domain`: contratos y entidad `NewsItem`.
+- `Infrastructure`: RSS ABI, persistencia JSON/Supabase, cache de paginas y logging.
+- `Shared`: configuracion, HTTP y utilidades transversales.
+- `bootstrap/`: composicion de dependencias y autoload.
+- `bin/`: comandos principales del proyecto.
+- `scripts/`: wrappers de compatibilidad para no romper flujos existentes.
 
 ## Configuracion
 
@@ -27,11 +59,15 @@ SUPABASE_SERVICE_ROLE_KEY="tu-service-role-key"
 SUPABASE_TABLE="news"
 ```
 
-Si `SUPABASE_ENABLED=true`, el sistema intentara leer y escribir noticias en Supabase. El archivo `storage/news.json` se mantiene como respaldo local.
+Si `SUPABASE_ENABLED=true`, el sistema intentara leer desde Supabase y mantener `storage/news.json` como respaldo local sincronizado.
 
 ## Actualizacion manual de noticias
 
-Para obtener noticias nuevas y regenerar el almacenamiento configurado:
+```bash
+php bin/update-news.php
+```
+
+Tambien se conserva el wrapper anterior:
 
 ```bash
 php scripts/update_news.php
@@ -39,8 +75,20 @@ php scripts/update_news.php
 
 ## Migracion a Supabase
 
-Con la tabla `news` ya creada y las variables de entorno configuradas, puedes migrar el contenido local actual con:
+```bash
+php bin/migrate-news-to-supabase.php
+```
+
+Wrapper compatible:
 
 ```bash
 php scripts/migrate_news_to_supabase.php
 ```
+
+## SOLID aplicado
+
+- Responsabilidad unica: la extraccion RSS, la persistencia, el logging y los casos de uso quedaron separados.
+- Abierto/cerrado: se pueden agregar nuevas fuentes o repositorios implementando contratos del dominio.
+- Inversion de dependencias: los casos de uso dependen de interfaces, no de implementaciones concretas.
+- Presentacion limpia: los entrypoints (`public`, `api`, `bin`) solo coordinan, no contienen logica de negocio.
+

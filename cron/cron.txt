@@ -1,2 +1,2 @@
-*/5 * * * * /usr/bin/php /ruta-completa/portal-noticias-abi/scripts/update_news.php
+*/5 * * * * /usr/bin/php /ruta-completa/portal-noticias-abi/bin/update-news.php
 

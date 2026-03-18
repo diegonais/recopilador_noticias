@@ -1,11 +1,18 @@
 <?php
 
-class ResponseHelper
+declare(strict_types=1);
+
+namespace PortalNoticias\Shared\Support;
+
+final class JsonResponder
 {
-    public static function json(array $data, $statusCode = 200)
+    /**
+     * @param array<string, mixed> $data
+     */
+    public static function send(array $data, int $statusCode = 200): void
     {
         if (!headers_sent()) {
-            http_response_code((int) $statusCode);
+            http_response_code($statusCode);
             header('Content-Type: application/json; charset=utf-8');
             header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
         }

@@ -3,6 +3,7 @@ const detailLoading = document.querySelector('#detail-loading');
 const detailError = document.querySelector('#detail-error');
 const detailArticle = document.querySelector('#news-detail');
 const backToTopButton = document.querySelector('#back-to-top');
+const utils = window.NewsPortalUtils;
 
 const detailEndpointCandidates = Array.from(new Set([
     detailShell ? detailShell.dataset.apiEndpoint : null,
@@ -72,41 +73,33 @@ async function fetchDetailPayload() {
 
 function renderDetail(item) {
     const imageMarkup = item.image
-        ? `<img class="detail-hero__image" src="${escapeAttribute(item.image)}" alt="${escapeAttribute(item.title || 'Noticia ABI')}" loading="eager">`
+        ? `<img class="detail-hero__image" src="${utils.escapeAttribute(item.image)}" alt="${utils.escapeAttribute(item.title || 'Noticia ABI')}" loading="eager">`
         : '';
 
-    const fullText = normalizeArticleText(item.summary || 'Sin contenido disponible.');
+    const fullText = utils.normalizeArticleText(item.summary || 'Sin contenido disponible.');
 
     detailArticle.innerHTML = `
         <div class="detail-hero">
             ${imageMarkup}
             <div class="detail-hero__body">
-                <p class="section-kicker">${escapeHtml(item.source || 'ABI')}</p>
-                <h2 class="detail-title">${escapeHtml(item.title || 'Sin titulo')}</h2>
+                <p class="section-kicker">${utils.escapeHtml(item.source || 'ABI')}</p>
+                <h2 class="detail-title">${utils.escapeHtml(item.title || 'Sin titulo')}</h2>
                 <div class="detail-meta">
-                    <span>${formatDate(item.published_at, true)}</span>
+                    <span>${utils.formatDate(item.published_at, true)}</span>
                     <span>Fuente oficial ABI</span>
                 </div>
             </div>
         </div>
         <div class="detail-content">
-            <p class="detail-text">${escapeHtml(fullText)}</p>
+            <p class="detail-text">${utils.escapeHtml(fullText)}</p>
             <div class="detail-actions">
                 <a class="detail-action" href="/">Volver al portal</a>
-                <a class="detail-action detail-action--primary" href="${escapeAttribute(item.link || '#')}" target="_blank" rel="noopener noreferrer">Ver fuente original en ABI</a>
+                <a class="detail-action detail-action--primary" href="${utils.escapeAttribute(item.link || '#')}" target="_blank" rel="noopener noreferrer">Ver fuente original en ABI</a>
             </div>
         </div>
     `;
 
     document.title = `${item.title || 'Noticia'} | Portal Noticias ABI`;
-}
-
-function normalizeArticleText(text) {
-    return String(text || '')
-        .replace(/\s+(?:(?:\/\/?[A-Z]{2,6}\/\/?)|(?:[A-Za-z]{2,6}(?:\/[A-Za-z]{2,6})*))?\s*Navegaci\S*\s+de\s+entradas[\s\S]*$/iu, '')
-        .replace(/\s*\.?\s*(?=[\/A-Za-z]*\/)(?:\/{0,3}[A-Za-z]{2,6}(?:\/[A-Za-z]{2,6})*\/{0,3})\s*$/u, '')
-        .replace(/\s+/g, ' ')
-        .trim();
 }
 
 function setDetailState(state) {
@@ -115,61 +108,7 @@ function setDetailState(state) {
     detailArticle.classList.toggle('is-hidden', state !== 'success');
 }
 
-function formatDate(dateString, withTime) {
-    if (!dateString) {
-        return 'Fecha no disponible';
-    }
-
-    const date = new Date(dateString);
-
-    if (Number.isNaN(date.getTime())) {
-        return 'Fecha no disponible';
-    }
-
-    return new Intl.DateTimeFormat('es-BO', Object.assign({
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    }, withTime ? {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    } : {})).format(date);
-}
-
 function setupBackToTop() {
-    if (!backToTopButton) {
-        return;
-    }
-
-    const toggleVisibility = function () {
-        backToTopButton.classList.toggle('is-visible', window.scrollY > 500);
-    };
-
-    backToTopButton.addEventListener('click', function () {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth',
-        });
-    });
-
-    window.addEventListener('scroll', toggleVisibility, { passive: true });
-    toggleVisibility();
+    utils.setupBackToTop(backToTopButton);
 }
-
-function escapeHtml(value) {
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
-function escapeAttribute(value) {
-    return escapeHtml(value);
-}
-
-
-
 

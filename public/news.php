@@ -1,6 +1,9 @@
 <?php
-require_once __DIR__ . '/../app/config/config.php';
 
+declare(strict_types=1);
+
+$container = require __DIR__ . '/../bootstrap/app.php';
+$config = $container->config();
 $apiEndpoint = '/api/news.php';
 $newsId = isset($_GET['id']) ? (string) $_GET['id'] : '';
 ?>
@@ -9,7 +12,7 @@ $newsId = isset($_GET['id']) ? (string) $_GET['id'] : '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle de noticia | <?php echo htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8'); ?></title>
+    <title>Detalle de noticia | <?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></title>
     <meta name="description" content="Detalle completo de una noticia ABI dentro del portal.">
     <link rel="stylesheet" href="./assets/css/styles.css">
 </head>
@@ -19,7 +22,6 @@ $newsId = isset($_GET['id']) ? (string) $_GET['id'] : '';
             <div class="brand">
                 <div class="brand-mark" aria-hidden="true">ABI</div>
                 <div>
-                    <p class="eyebrow">Lectura dentro del portal</p>
                     <h1>Detalle de noticia</h1>
                 </div>
             </div>
@@ -45,12 +47,14 @@ $newsId = isset($_GET['id']) ? (string) $_GET['id'] : '';
         </main>
 
         <footer class="site-footer">
-            <p>Desarrollado por <?php echo htmlspecialchars(FOOTER_AUTHOR, ENT_QUOTES, 'UTF-8'); ?> | <?php echo date('Y'); ?></p>
+            <p>Desarrollado por <?php echo htmlspecialchars($config->footerAuthor(), ENT_QUOTES, 'UTF-8'); ?> | <?php echo date('Y'); ?></p>
         </footer>
     </div>
 
     <button id="back-to-top" class="back-to-top" type="button" aria-label="Volver arriba">Subir</button>
 
+    <script src="./assets/js/news-shared.js" defer></script>
     <script src="./assets/js/news-detail.js" defer></script>
 </body>
 </html>
+

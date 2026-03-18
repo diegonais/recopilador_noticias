@@ -6,6 +6,7 @@ const emptyState = document.querySelector('#empty-state');
 const lastUpdated = document.querySelector('#last-updated');
 const backToTopButton = document.querySelector('#back-to-top');
 const AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const utils = window.NewsPortalUtils;
 
 const endpointCandidates = Array.from(new Set([
     shell ? shell.dataset.apiEndpoint : null,
@@ -76,11 +77,11 @@ function renderNews(news) {
 
 function createCardMarkup(item) {
     const imageMarkup = item.image
-        ? `<img class="news-card__image" src="${escapeAttribute(item.image)}" alt="${escapeAttribute(item.title)}" loading="lazy">`
+        ? `<img class="news-card__image" src="${utils.escapeAttribute(item.image)}" alt="${utils.escapeAttribute(item.title)}" loading="lazy">`
         : `<div class="news-card__image news-card__image--placeholder" aria-hidden="true">Sin imagen</div>`;
 
     const detailUrl = buildDetailUrl(item);
-    const shortSummary = truncateText(normalizeArticleText(item.summary || 'Sin resumen disponible.'), 280);
+    const shortSummary = truncateText(utils.normalizeArticleText(item.summary || 'Sin resumen disponible.'), 280);
 
     return `
         <article class="news-card">
@@ -89,12 +90,12 @@ function createCardMarkup(item) {
             </div>
             <div class="news-card__body">
                 <div class="news-card__meta">
-                    <span>${escapeHtml(item.source || 'ABI')}</span>
-                    <span>${formatDate(item.published_at)}</span>
+                    <span>${utils.escapeHtml(item.source || 'ABI')}</span>
+                    <span>${utils.formatDate(item.published_at)}</span>
                 </div>
-                <h3 class="news-card__title">${escapeHtml(item.title || 'Sin titulo')}</h3>
-                <p class="news-card__summary">${escapeHtml(shortSummary)}</p>
-                <a class="news-card__link" href="${escapeAttribute(detailUrl)}">
+                <h3 class="news-card__title">${utils.escapeHtml(item.title || 'Sin titulo')}</h3>
+                <p class="news-card__summary">${utils.escapeHtml(shortSummary)}</p>
+                <a class="news-card__link" href="${utils.escapeAttribute(detailUrl)}">
                     Leer mas
                 </a>
             </div>
@@ -105,14 +106,6 @@ function createCardMarkup(item) {
 function buildDetailUrl(item) {
     const id = item.guid || item.link || item.title || '';
     return `/news.php?id=${encodeURIComponent(id)}`;
-}
-
-function normalizeArticleText(text) {
-    return String(text || '')
-        .replace(/\s+(?:(?:\/\/?[A-Z]{2,6}\/\/?)|(?:[A-Za-z]{2,6}(?:\/[A-Za-z]{2,6})*))?\s*Navegaci\S*\s+de\s+entradas[\s\S]*$/iu, '')
-        .replace(/\s*\.?\s*(?=[\/A-Za-z]*\/)(?:\/{0,3}[A-Za-z]{2,6}(?:\/[A-Za-z]{2,6})*\/{0,3})\s*$/u, '')
-        .replace(/\s+/g, ' ')
-        .trim();
 }
 
 function truncateText(text, limit) {
@@ -147,29 +140,7 @@ function updateLastUpdated(dateString) {
         return;
     }
 
-    lastUpdated.textContent = `Actualizado: ${formatDate(dateString, true)}`;
-}
-
-function formatDate(dateString, withTime = true) {
-    if (!dateString) {
-        return 'Fecha no disponible';
-    }
-
-    const date = new Date(dateString);
-
-    if (Number.isNaN(date.getTime())) {
-        return 'Fecha no disponible';
-    }
-
-    return new Intl.DateTimeFormat('es-BO', Object.assign({
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    }, withTime ? {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    } : {})).format(date);
+    lastUpdated.textContent = `Actualizado: ${utils.formatDate(dateString, true)}`;
 }
 
 function withCacheBuster(endpoint) {
@@ -177,6 +148,7 @@ function withCacheBuster(endpoint) {
 
     return endpoint + separator + '_=' + Date.now();
 }
+
 function setupAutoRefresh() {
     window.setInterval(function () {
         loadNews(false);
@@ -184,39 +156,6 @@ function setupAutoRefresh() {
 }
 
 function setupBackToTop() {
-    if (!backToTopButton) {
-        return;
-    }
-
-    const toggleVisibility = function () {
-        backToTopButton.classList.toggle('is-visible', window.scrollY > 500);
-    };
-
-    backToTopButton.addEventListener('click', function () {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth',
-        });
-    });
-
-    window.addEventListener('scroll', toggleVisibility, { passive: true });
-    toggleVisibility();
+    utils.setupBackToTop(backToTopButton);
 }
-
-function escapeHtml(value) {
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
-function escapeAttribute(value) {
-    return escapeHtml(value);
-}
-
-
-
-
 

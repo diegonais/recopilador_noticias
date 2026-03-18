@@ -1,6 +1,9 @@
 <?php
-require_once __DIR__ . '/../app/config/config.php';
 
+declare(strict_types=1);
+
+$container = require __DIR__ . '/../bootstrap/app.php';
+$config = $container->config();
 $apiEndpoint = '/api/news.php';
 ?>
 <!DOCTYPE html>
@@ -8,7 +11,7 @@ $apiEndpoint = '/api/news.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8'); ?></title>
+    <title><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></title>
     <meta name="description" content="Portal simple para visualizar noticias recientes de la Agencia Boliviana de Informacion.">
     <link rel="stylesheet" href="./assets/css/styles.css">
 </head>
@@ -18,8 +21,7 @@ $apiEndpoint = '/api/news.php';
             <div class="brand">
                 <div class="brand-mark" aria-hidden="true">ABI</div>
                 <div>
-                    <p class="eyebrow">Actualizacion automatica cada 5 minutos</p>
-                    <h1><?php echo htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8'); ?></h1>
+                    <h1><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></h1>
                 </div>
             </div>
             <p class="hero-copy">
@@ -55,7 +57,7 @@ $apiEndpoint = '/api/news.php';
 
         <footer class="site-footer">
             <p>Fuente: ABI RSS oficial.</p>
-            <p>Desarrollado por <?php echo htmlspecialchars(FOOTER_AUTHOR, ENT_QUOTES, 'UTF-8'); ?> | <?php echo date('Y'); ?></p>
+            <p>Desarrollado por <?php echo htmlspecialchars($config->footerAuthor(), ENT_QUOTES, 'UTF-8'); ?> | <?php echo date('Y'); ?></p>
         </footer>
     </div>
 
@@ -65,6 +67,7 @@ $apiEndpoint = '/api/news.php';
         <div class="noscript-message">Este portal necesita JavaScript habilitado para mostrar las noticias.</div>
     </noscript>
 
+    <script src="./assets/js/news-shared.js" defer></script>
     <script src="./assets/js/app.js" defer></script>
 </body>
 </html>
