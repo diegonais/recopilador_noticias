@@ -1,5 +1,4 @@
 <?php
-
 class TextHelper
 {
     public static function cleanHtml($text)
@@ -59,7 +58,11 @@ class TextHelper
 
         $patterns = array(
             '/\s*La entrada .*? se public(?:Ã³|ó) primero en ABI\.?$/u',
+            '/\s*La entrada .*? se publicó primero en ABI\.?$/u',
+            '/\s*La entrada .*? se publico primero en ABI\.?$/u',
             '/\s*Navegaci(?:Ã³|ó)n de entradas.*$/u',
+            '/\s+(?:(?:\/\/?[A-Z]{2,6}\/\/?)|(?:[A-Za-z]{2,6}(?:\/[A-Za-z]{2,6})*))?\s*Navegaci\S*\s+de\s+entradas[\s\S]*$/iu',
+            '/\s*\.?\s*(?=[\/A-Za-z]*\/)(?:\/{0,3}[A-Za-z]{2,6}(?:\/[A-Za-z]{2,6})*\/{0,3})\s*$/u',
         );
 
         $cleaned = preg_replace($patterns, '', $text);
