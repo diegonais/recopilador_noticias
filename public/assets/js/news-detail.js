@@ -4,6 +4,7 @@ const detailError = document.querySelector('#detail-error');
 const detailArticle = document.querySelector('#news-detail');
 const backToTopButton = document.querySelector('#back-to-top');
 const utils = window.NewsPortalUtils;
+const THEME_STORAGE_KEY = 'portal_theme';
 
 const detailEndpointCandidates = Array.from(new Set([
     detailShell ? detailShell.dataset.apiEndpoint : null,
@@ -14,6 +15,7 @@ const detailEndpointCandidates = Array.from(new Set([
 const requestedId = detailShell ? detailShell.dataset.newsId : '';
 
 document.addEventListener('DOMContentLoaded', function () {
+    initializeTheme();
     setupBackToTop();
     loadNewsDetail();
 });
@@ -108,6 +110,37 @@ function setDetailState(state) {
     detailArticle.classList.toggle('is-hidden', state !== 'success');
 }
 
+function initializeTheme() {
+    const storedTheme = readStoredTheme();
+
+    if (storedTheme === 'dark' || storedTheme === 'light') {
+        applyTheme(storedTheme);
+        return;
+    }
+
+    let preferredTheme = 'light';
+
+    try {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            preferredTheme = 'dark';
+        }
+    } catch (error) {
+    }
+
+    applyTheme(preferredTheme);
+}
+
+function readStoredTheme() {
+    try {
+        return localStorage.getItem(THEME_STORAGE_KEY);
+    } catch (error) {
+        return null;
+    }
+}
+
+function applyTheme(theme) {
+    document.body.classList.toggle('theme-dark', theme === 'dark');
+}
 function setupBackToTop() {
     utils.setupBackToTop(backToTopButton);
 }

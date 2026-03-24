@@ -22,11 +22,16 @@ final class SupabaseNewsRepository implements NewsRepositoryInterface
     {
         $this->guardConfiguration();
 
-        $query = http_build_query([
+        $queryParams = [
             'select' => 'guid,title,summary,link,source,published_at,image,created_at,updated_at',
             'order' => 'published_at.desc',
-            'limit' => max(1, $limit),
-        ], '', '&', PHP_QUERY_RFC3986);
+        ];
+
+        if ($limit > 0 && $limit !== PHP_INT_MAX) {
+            $queryParams['limit'] = $limit;
+        }
+
+        $query = http_build_query($queryParams, '', '&', PHP_QUERY_RFC3986);
 
         $response = $this->httpClient->request(
             'GET',
@@ -180,3 +185,4 @@ final class SupabaseNewsRepository implements NewsRepositoryInterface
         return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
     }
 }
+

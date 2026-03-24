@@ -37,4 +37,3 @@ php /var/www/html/bin/update-news.php || true
 cron
 
 exec php -S 0.0.0.0:3003 -t /var/www/html/public /var/www/html/router.php
-

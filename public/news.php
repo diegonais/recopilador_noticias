@@ -29,9 +29,9 @@ $newsId = isset($_GET['id']) ? (string) $_GET['id'] : '';
         </header>
 
         <main class="content">
-            <nav class="detail-nav">
+            <!-- <nav class="detail-nav">
                 <a class="detail-back" href="/">Volver al portal</a>
-            </nav>
+            </nav> -->
 
             <div id="detail-loading" class="status-card">
                 <strong>Cargando noticia...</strong>
@@ -47,7 +47,17 @@ $newsId = isset($_GET['id']) ? (string) $_GET['id'] : '';
         </main>
 
         <footer class="site-footer">
-            <p>Desarrollado por <?php echo htmlspecialchars($config->footerAuthor(), ENT_QUOTES, 'UTF-8'); ?> | <?php echo date('Y'); ?></p>
+            <div class="site-footer__inner">
+                <div class="site-footer__brand">
+                    <p class="site-footer__label">Recopilador Informativo</p>
+                    <h2 class="site-footer__title"><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></h2>
+                    
+                </div>
+
+                <div class="site-footer__meta" aria-label="Informacion del portal">
+                    <p><span>Desarrollo ::</span> <?php echo htmlspecialchars($config->footerAuthor(), ENT_QUOTES, 'UTF-8'); ?> | <?php echo date('Y'); ?></p>
+                </div>
+            </div>
         </footer>
     </div>
 

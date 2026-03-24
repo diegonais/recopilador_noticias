@@ -16,8 +16,13 @@ $apiEndpoint = '/api/news.php';
     <link rel="stylesheet" href="./assets/css/styles.css">
 </head>
 <body>
-    <div class="site-shell" data-api-endpoint="<?php echo htmlspecialchars($apiEndpoint, ENT_QUOTES, 'UTF-8'); ?>">
+    <div
+        class="site-shell"
+        data-api-endpoint="<?php echo htmlspecialchars($apiEndpoint, ENT_QUOTES, 'UTF-8'); ?>"
+        data-timezone="<?php echo htmlspecialchars($config->timezone(), ENT_QUOTES, 'UTF-8'); ?>"
+    >
         <header class="site-header">
+
             <div class="brand">
                 <div class="brand-mark" aria-hidden="true">ABI</div>
                 <div>
@@ -25,21 +30,70 @@ $apiEndpoint = '/api/news.php';
                 </div>
             </div>
             <p class="hero-copy">
-                Noticias recientes obtenidas de la Agencia Boliviana de Informacion.
+                Noticias recientes obtenidas de la Agencia Boliviana de Informacion (ABI).
             </p>
         </header>
 
         <main class="content">
             <section class="content-head">
                 <div>
-                    <p class="section-kicker">Ultimas publicaciones</p>
+                    <p class="section-kicker">Últimas publicaciones</p>
                 </div>
                 <p id="last-updated" class="last-updated" aria-live="polite"></p>
             </section>
 
+            <div class="toolbar-actions">
+                <button id="filter-toggle" class="filter-toggle" type="button" aria-expanded="false" aria-controls="filters-panel">
+                    Buscar por fecha
+                </button>
+                <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar a tema oscuro" aria-pressed="false">&#9790;</button>
+            </div>
+
+            <section id="filters-panel" class="filters-card filters-panel filters-panel--collapsed" aria-label="Filtros de noticias" aria-hidden="true">
+                <div class="filters-grid">
+                    <label class="filter-field" for="filter-year">
+                        <span class="filter-field__label">Año</span>
+                        <select id="filter-year" class="filter-field__control">
+                            <option value="">Todos</option>
+                        </select>
+                    </label>
+
+                    <label class="filter-field" for="filter-month">
+                        <span class="filter-field__label">Mes</span>
+                        <select id="filter-month" class="filter-field__control">
+                            <option value="">Todos</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </label>
+
+                    <label class="filter-field" for="filter-day">
+                        <span class="filter-field__label">Dia</span>
+                        <select id="filter-day" class="filter-field__control">
+                            <option value="">Todos</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="filters-actions">
+                    <button id="filter-today" class="filter-action" type="button">Hoy</button>
+                    <button id="filter-clear" class="filter-action filter-action--ghost" type="button">Limpiar</button>
+                </div>
+            </section>
+
             <div id="loading-state" class="status-card">
                 <strong>Cargando noticias...</strong>
-                <p>Estamos consultando el archivo local generado por el actualizador.</p>
+                <p>Estamos consultando las noticias almacenadas.</p>
             </div>
 
             <div id="error-state" class="status-card is-hidden is-error" role="alert">
@@ -49,15 +103,26 @@ $apiEndpoint = '/api/news.php';
 
             <div id="empty-state" class="status-card is-hidden">
                 <strong>Por ahora no hay noticias disponibles.</strong>
-                <p>Cuando el sistema vuelva a actualizarse, las publicaciones apareceran aqui.</p>
+                <p id="empty-state-message">Cuando el sistema vuelva a actualizarse, las publicaciones apareceran aqui.</p>
             </div>
 
             <section id="news-list" class="news-grid is-hidden" aria-live="polite" aria-busy="true"></section>
         </main>
 
         <footer class="site-footer">
-            <p>Fuente: ABI RSS oficial.</p>
-            <p>Desarrollado por <?php echo htmlspecialchars($config->footerAuthor(), ENT_QUOTES, 'UTF-8'); ?> | <?php echo date('Y'); ?></p>
+            <div class="site-footer__inner">
+                <div class="site-footer__brand">
+                    <p class="site-footer__label">Recopilador Informativo</p>
+                    <h2 class="site-footer__title"><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></h2>
+                    <p class="site-footer__copy">Cobertura automática de noticias ABI con visualización optimizada para consulta diaria.</p>
+                </div>
+
+                <div class="site-footer__meta" aria-label="Informacion del portal">
+                    <p><span>Fuente ::</span> ABI RSS oficial</p>
+                    <p><span>Frecuencia ::</span> Actualización cada 5 minutos</p>
+                    <p><span>Desarrollo ::</span> <?php echo htmlspecialchars($config->footerAuthor(), ENT_QUOTES, 'UTF-8'); ?> | <?php echo date('Y'); ?></p>
+                </div>
+            </div>
         </footer>
     </div>
 
