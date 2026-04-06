@@ -50,27 +50,40 @@ $apiEndpoint = '/api/news.php';
             </div>
 
             <section id="filters-panel" class="filters-card filters-panel filters-panel--collapsed" aria-label="Filtros de noticias" aria-hidden="true">
-                <div class="filters-grid">
-                    <label class="filter-field" for="filter-year">
-                        <span class="filter-field__label">A&ntilde;o</span>
-                        <select id="filter-year" class="filter-field__control">
-                            <option value="">Sin fechas</option>
-                        </select>
-                    </label>
-
-                    <label class="filter-field" for="filter-month">
-                        <span class="filter-field__label">Mes</span>
-                        <select id="filter-month" class="filter-field__control">
-                            <option value="">Sin fechas</option>
-                        </select>
-                    </label>
-
-                    <label class="filter-field" for="filter-day">
-                        <span class="filter-field__label">Dia</span>
-                        <select id="filter-day" class="filter-field__control">
-                            <option value="">Sin fechas</option>
-                        </select>
-                    </label>
+                <div class="calendar-filter" aria-label="Calendario de noticias">
+                    <div class="calendar-filter__header">
+                        <button id="calendar-prev" class="calendar-filter__nav" type="button" aria-label="Mes anterior">
+                            <svg class="calendar-filter__nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                        <button id="calendar-current-month" class="calendar-filter__title-trigger" type="button" aria-label="Seleccionar mes y a&ntilde;o" aria-haspopup="true" aria-expanded="false" aria-controls="calendar-month-year-picker"></button>
+                        <button id="calendar-next" class="calendar-filter__nav" type="button" aria-label="Mes siguiente">
+                            <svg class="calendar-filter__nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="calendar-month-year-picker" class="calendar-filter__picker is-hidden" aria-hidden="true">
+                        <label class="calendar-filter__picker-field" for="calendar-year-select">
+                            <span>A&ntilde;o</span>
+                            <select id="calendar-year-select" class="calendar-filter__picker-select"></select>
+                        </label>
+                        <label class="calendar-filter__picker-field" for="calendar-month-select">
+                            <span>Mes</span>
+                            <select id="calendar-month-select" class="calendar-filter__picker-select"></select>
+                        </label>
+                    </div>
+                    <div class="calendar-filter__weekdays" aria-hidden="true">
+                        <span>Lun</span>
+                        <span>Mar</span>
+                        <span>Mie</span>
+                        <span>Jue</span>
+                        <span>Vie</span>
+                        <span>Sab</span>
+                        <span>Dom</span>
+                    </div>
+                    <div id="calendar-grid" class="calendar-filter__grid" role="grid" aria-label="Dias del mes"></div>
                 </div>
 
                 <div class="filters-actions">

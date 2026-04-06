@@ -6,9 +6,13 @@ const emptyState = document.querySelector('#empty-state');
 const emptyStateMessage = document.querySelector('#empty-state-message');
 const lastUpdated = document.querySelector('#last-updated');
 const backToTopButton = document.querySelector('#back-to-top');
-const filterYear = document.querySelector('#filter-year');
-const filterMonth = document.querySelector('#filter-month');
-const filterDay = document.querySelector('#filter-day');
+const calendarGrid = document.querySelector('#calendar-grid');
+const calendarPrev = document.querySelector('#calendar-prev');
+const calendarNext = document.querySelector('#calendar-next');
+const calendarCurrentMonth = document.querySelector('#calendar-current-month');
+const calendarPicker = document.querySelector('#calendar-month-year-picker');
+const calendarYearSelect = document.querySelector('#calendar-year-select');
+const calendarMonthSelect = document.querySelector('#calendar-month-select');
 const filterToday = document.querySelector('#filter-today');
 const filterToggle = document.querySelector('#filter-toggle');
 const filtersPanel = document.querySelector('#filters-panel');
@@ -27,8 +31,10 @@ const endpointCandidates = Array.from(new Set([
 
 let allNews = [];
 let hasInitializedDefaultFilter = false;
+let selectedFilterDate = null;
+let calendarView = null;
+let availableNewsDates = new Set();
 
-const DAYS_IN_MONTH = 31;
 const DEFAULT_EMPTY_MESSAGE = 'Cuando el sistema vuelva a actualizarse, las publicaciones apareceran aqui.';
 const THEME_STORAGE_KEY = 'portal_theme';
 const MONTH_LABELS = {
@@ -67,9 +73,10 @@ async function loadNews(showLoadingState = true) {
         const news = Array.isArray(payload && payload.data) ? payload.data : Array.isArray(payload) ? payload : [];
 
         allNews = news;
+        rebuildAvailableNewsDates();
         updateLastUpdated(payload && payload.updated_at ? payload.updated_at : null);
-        refreshFilterOptions();
         applyDefaultFilterIfNeeded();
+        refreshFilterOptions();
         applyFiltersAndRender();
     } catch (error) {
         console.error('Error loading news:', error);
@@ -164,38 +171,18 @@ function applyTheme(theme) {
     themeToggle.textContent = isDark ? '\u2600' : '\u263D';
 }
 function setupFilters() {
-    syncDateFilterControls();
-
-    if (filterYear) {
-        filterYear.addEventListener('change', function () {
-            syncDateFilterControls();
-            applyFiltersAndRender();
-        });
-    }
-
-    if (filterMonth) {
-        filterMonth.addEventListener('change', function () {
-            syncDateFilterControls();
-            applyFiltersAndRender();
-        });
-    }
-
-    if (filterDay) {
-        filterDay.addEventListener('change', function () {
-            syncDateFilterControls();
-            applyFiltersAndRender();
-        });
-    }
+    setupCalendarNavigation();
+    setupMonthYearPicker();
+    refreshFilterOptions();
 
     if (filterToday) {
         filterToday.addEventListener('click', function () {
             applyTodayFilter();
-            syncDateFilterControls();
             applyFiltersAndRender();
+            renderCalendar();
         });
     }
 }
-
 
 function setupFilterToggle() {
     if (!filterToggle || !filtersPanel) {
@@ -207,6 +194,10 @@ function setupFilterToggle() {
         filtersPanel.setAttribute('aria-hidden', expanded ? 'false' : 'true');
         filterToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
         filterToggle.textContent = expanded ? 'Ocultar busqueda' : 'Buscar por fecha';
+
+        if (!expanded) {
+            toggleMonthYearPicker(false);
+        }
     };
 
     setExpanded(!filtersPanel.classList.contains('filters-panel--collapsed'));
@@ -216,20 +207,420 @@ function setupFilterToggle() {
         setExpanded(!expanded);
     });
 }
-
-function refreshFilterOptions() {
-    if (!filterYear) {
+function setupMonthYearPicker() {
+    if (!calendarCurrentMonth || !calendarPicker || !calendarYearSelect || !calendarMonthSelect) {
         return;
     }
 
-    const selectedYear = filterYear.value;
-    const selectedMonth = filterMonth ? filterMonth.value : '';
-    const selectedDay = filterDay ? filterDay.value : '';
+    calendarCurrentMonth.addEventListener('click', function (event) {
+        event.stopPropagation();
+        toggleMonthYearPicker();
+    });
 
-    populateYearOptions(selectedYear);
-    populateMonthOptions(selectedMonth);
-    populateDayOptions(selectedDay);
-    syncDateFilterControls();
+    calendarYearSelect.addEventListener('change', function () {
+        const selectedYear = parseInteger(calendarYearSelect.value);
+
+        if (selectedYear === null) {
+            return;
+        }
+
+        populateMonthPickerOptions(selectedYear);
+        applyMonthYearPickerSelection(false);
+    });
+
+    calendarMonthSelect.addEventListener('change', function () {
+        applyMonthYearPickerSelection(true);
+    });
+
+    document.addEventListener('click', function (event) {
+        if (calendarPicker.classList.contains('is-hidden')) {
+            return;
+        }
+
+        const target = event.target;
+
+        if (!(target instanceof Element)) {
+            return;
+        }
+
+        const insidePicker = target.closest('#calendar-month-year-picker');
+        const insideTrigger = target.closest('#calendar-current-month');
+
+        if (!insidePicker && !insideTrigger) {
+            toggleMonthYearPicker(false);
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            toggleMonthYearPicker(false);
+        }
+    });
+}
+
+function toggleMonthYearPicker(forceOpen) {
+    if (!calendarCurrentMonth || !calendarPicker) {
+        return;
+    }
+
+    const shouldOpen = typeof forceOpen === 'boolean'
+        ? forceOpen
+        : calendarPicker.classList.contains('is-hidden');
+
+    calendarPicker.classList.toggle('is-hidden', !shouldOpen);
+    calendarPicker.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
+    calendarCurrentMonth.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+
+    if (shouldOpen) {
+        syncMonthYearPickerState();
+    }
+}
+
+function applyMonthYearPickerSelection(closePicker) {
+    const year = parseInteger(calendarYearSelect ? calendarYearSelect.value : '');
+    const month = parseInteger(calendarMonthSelect ? calendarMonthSelect.value : '');
+
+    if (year === null || month === null) {
+        return;
+    }
+
+    calendarView = clampCalendarView({ year: year, month: month });
+    renderCalendar();
+
+    if (closePicker) {
+        toggleMonthYearPicker(false);
+    }
+}
+
+function syncMonthYearPickerState() {
+    if (!calendarYearSelect || !calendarMonthSelect || !calendarView) {
+        return;
+    }
+
+    const minView = getMinimumCalendarView();
+    const maxView = getMaximumCalendarView();
+    const yearOptions = [];
+
+    for (let year = maxView.year; year >= minView.year; year -= 1) {
+        yearOptions.push({ value: String(year), label: String(year) });
+    }
+
+    setSimpleSelectOptions(calendarYearSelect, yearOptions, String(calendarView.year));
+    populateMonthPickerOptions(calendarView.year);
+    calendarMonthSelect.value = String(calendarView.month);
+}
+
+function populateMonthPickerOptions(selectedYear) {
+    if (!calendarMonthSelect) {
+        return;
+    }
+
+    const minView = getMinimumCalendarView();
+    const maxView = getMaximumCalendarView();
+    let minMonth = 1;
+    let maxMonth = 12;
+
+    if (selectedYear === minView.year) {
+        minMonth = minView.month;
+    }
+
+    if (selectedYear === maxView.year) {
+        maxMonth = maxView.month;
+    }
+
+    const monthOptions = [];
+
+    for (let month = minMonth; month <= maxMonth; month += 1) {
+        monthOptions.push({ value: String(month), label: MONTH_LABELS[month] || String(month) });
+    }
+
+    const preferredMonth = calendarView && calendarView.year === selectedYear ? calendarView.month : maxMonth;
+    setSimpleSelectOptions(calendarMonthSelect, monthOptions, String(preferredMonth));
+}
+
+function setSimpleSelectOptions(selectElement, options, selectedValue) {
+    if (!selectElement) {
+        return;
+    }
+
+    selectElement.innerHTML = '';
+
+    options.forEach(function (optionData) {
+        const option = document.createElement('option');
+        option.value = optionData.value;
+        option.textContent = optionData.label;
+        selectElement.appendChild(option);
+    });
+
+    if (options.length === 0) {
+        selectElement.disabled = true;
+        return;
+    }
+
+    selectElement.disabled = false;
+
+    const hasSelectedValue = options.some(function (optionData) {
+        return optionData.value === selectedValue;
+    });
+
+    selectElement.value = hasSelectedValue ? selectedValue : options[0].value;
+}
+function setupCalendarNavigation() {
+    if (calendarPrev) {
+        calendarPrev.addEventListener('click', function () {
+            shiftCalendarView(-1);
+        });
+    }
+
+    if (calendarNext) {
+        calendarNext.addEventListener('click', function () {
+            shiftCalendarView(1);
+        });
+    }
+}
+
+function shiftCalendarView(step) {
+    if (!calendarView || !Number.isFinite(step) || step === 0) {
+        return;
+    }
+
+    const targetMonth = new Date(calendarView.year, calendarView.month - 1 + step, 1);
+    const nextView = clampCalendarView({
+        year: targetMonth.getFullYear(),
+        month: targetMonth.getMonth() + 1,
+    });
+
+    if (compareCalendarView(nextView, calendarView) === 0) {
+        return;
+    }
+
+    calendarView = nextView;
+    renderCalendar();
+}
+
+function refreshFilterOptions() {
+    ensureCalendarView();
+    renderCalendar();
+}
+
+function ensureCalendarView() {
+    const selectedParts = getFilterSelection();
+
+    if (selectedParts.year !== null && selectedParts.month !== null) {
+        calendarView = clampCalendarView({
+            year: selectedParts.year,
+            month: selectedParts.month,
+        });
+        return;
+    }
+
+    if (!calendarView) {
+        const initial = getInitialCalendarViewParts();
+        calendarView = {
+            year: initial.year,
+            month: initial.month,
+        };
+    }
+
+    calendarView = clampCalendarView(calendarView);
+}
+
+function getInitialCalendarViewParts() {
+    const latestDate = getLatestAvailableDateParts();
+
+    if (latestDate) {
+        return latestDate;
+    }
+
+    const today = getTodayParts();
+
+    if (today) {
+        return today;
+    }
+
+    const fallback = new Date();
+
+    return {
+        year: fallback.getFullYear(),
+        month: fallback.getMonth() + 1,
+        day: fallback.getDate(),
+    };
+}
+
+function renderCalendar() {
+    if (!calendarGrid || !calendarCurrentMonth || !calendarView) {
+        return;
+    }
+
+    const year = calendarView.year;
+    const month = calendarView.month;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const firstDayOffset = getCalendarOffset(year, month);
+    const cells = [];
+
+    calendarCurrentMonth.textContent = `${MONTH_LABELS[month] || month} ${year}`;
+
+    for (let index = 0; index < firstDayOffset; index += 1) {
+        cells.push('<span class="calendar-filter__cell calendar-filter__cell--empty" aria-hidden="true"></span>');
+    }
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+        const parts = { year: year, month: month, day: day };
+        const dateKey = toDateKey(parts);
+        const hasNews = availableNewsDates.has(dateKey);
+        const selected = selectedFilterDate === dateKey;
+        const isToday = isTodayDateKey(dateKey);
+        const future = isFutureDateParts(parts);
+        const classNames = ['calendar-filter__day'];
+
+        if (hasNews) {
+            classNames.push('calendar-filter__day--has-news');
+        }
+
+        if (selected) {
+            classNames.push('calendar-filter__day--selected');
+        }
+
+        if (isToday) {
+            classNames.push('calendar-filter__day--today');
+        }
+
+        if (future) {
+            classNames.push('calendar-filter__day--future');
+        }
+
+        const disabledAttribute = future ? ' disabled aria-disabled="true"' : '';
+
+        cells.push(
+            `<button class="${classNames.join(' ')}" type="button" data-date="${dateKey}"${disabledAttribute}>${day}</button>`
+        );
+    }
+
+    while (cells.length % 7 !== 0) {
+        cells.push('<span class="calendar-filter__cell calendar-filter__cell--empty" aria-hidden="true"></span>');
+    }
+
+    calendarGrid.innerHTML = cells.join('');
+
+    Array.from(calendarGrid.querySelectorAll('.calendar-filter__day')).forEach(function (button) {
+        if (button.disabled) {
+            return;
+        }
+
+        button.addEventListener('click', function () {
+            const dateKey = button.dataset.date || '';
+            const parts = parseDateKey(dateKey);
+
+            if (!parts) {
+                return;
+            }
+
+            setFilterSelection(parts);
+            applyFiltersAndRender();
+            renderCalendar();
+        });
+    });
+
+    updateCalendarNavigationState();
+    syncMonthYearPickerState();
+}
+
+function updateCalendarNavigationState() {
+    if (!calendarPrev || !calendarNext || !calendarView) {
+        return;
+    }
+
+    const minView = getMinimumCalendarView();
+    const maxView = getMaximumCalendarView();
+    const prevMonthDate = new Date(calendarView.year, calendarView.month - 2, 1);
+    const nextMonthDate = new Date(calendarView.year, calendarView.month, 1);
+    const prevMonthView = {
+        year: prevMonthDate.getFullYear(),
+        month: prevMonthDate.getMonth() + 1,
+    };
+    const nextMonthView = {
+        year: nextMonthDate.getFullYear(),
+        month: nextMonthDate.getMonth() + 1,
+    };
+
+    calendarPrev.disabled = compareCalendarView(prevMonthView, minView) < 0;
+    calendarNext.disabled = compareCalendarView(nextMonthView, maxView) > 0;
+}
+
+function getMinimumCalendarView() {
+    const earliest = getEarliestAvailableDateParts();
+
+    if (earliest) {
+        return {
+            year: earliest.year,
+            month: earliest.month,
+        };
+    }
+
+    const today = getTodayParts();
+
+    if (today) {
+        return {
+            year: today.year,
+            month: today.month,
+        };
+    }
+
+    const fallback = new Date();
+
+    return {
+        year: fallback.getFullYear(),
+        month: fallback.getMonth() + 1,
+    };
+}
+
+function getMaximumCalendarView() {
+    const today = getTodayParts();
+
+    if (today) {
+        return {
+            year: today.year,
+            month: today.month,
+        };
+    }
+
+    const fallback = new Date();
+
+    return {
+        year: fallback.getFullYear(),
+        month: fallback.getMonth() + 1,
+    };
+}
+
+function clampCalendarView(view) {
+    if (!view) {
+        return getMaximumCalendarView();
+    }
+
+    const minView = getMinimumCalendarView();
+    const maxView = getMaximumCalendarView();
+
+    if (compareCalendarView(view, minView) < 0) {
+        return minView;
+    }
+
+    if (compareCalendarView(view, maxView) > 0) {
+        return maxView;
+    }
+
+    return {
+        year: view.year,
+        month: view.month,
+    };
+}
+
+function compareCalendarView(left, right) {
+    return (left.year * 100 + left.month) - (right.year * 100 + right.month);
+}
+function getCalendarOffset(year, month) {
+    const nativeDay = new Date(year, month - 1, 1).getDay();
+
+    return (nativeDay + 6) % 7;
 }
 
 function applyTodayFilter() {
@@ -239,141 +630,26 @@ function applyTodayFilter() {
         return;
     }
 
-    if (hasNewsForDate(today)) {
-        setFilterSelection(today);
-        return;
-    }
-
-    const latestAvailableDate = getLatestAvailableDateParts();
-
-    if (latestAvailableDate) {
-        setFilterSelection(latestAvailableDate);
-        return;
-    }
-
-    clearFilters();
+    setFilterSelection(today);
 }
 
 function clearFilters() {
-    if (filterYear) {
-        filterYear.value = '';
-    }
-
-    if (filterMonth) {
-        filterMonth.value = '';
-    }
-
-    if (filterDay) {
-        filterDay.value = '';
-    }
+    selectedFilterDate = null;
 }
 
-function populateYearOptions(selectedYear) {
-    if (!filterYear) {
-        return;
-    }
+function rebuildAvailableNewsDates() {
+    availableNewsDates = new Set();
 
-    const years = getAvailableValues('year', {
-        year: null,
-        month: null,
-        day: null,
-    }).sort(function (a, b) {
-        return b - a;
-    });
+    allNews.forEach(function (item) {
+        const parts = getDatePartsFromItem(item);
 
-    setSelectOptions(filterYear, years, selectedYear);
-}
+        if (!parts) {
+            return;
+        }
 
-function populateMonthOptions(selectedMonth) {
-    if (!filterMonth) {
-        return;
-    }
-
-    const selectedYear = parseInteger(filterYear ? filterYear.value : '');
-    const months = getAvailableValues('month', {
-        year: selectedYear,
-        month: null,
-        day: null,
-    }).sort(function (a, b) {
-        return b - a;
-    });
-
-    setSelectOptions(filterMonth, months, selectedMonth, function (month) {
-        return MONTH_LABELS[month] || String(month);
+        availableNewsDates.add(toDateKey(parts));
     });
 }
-
-function populateDayOptions(selectedDay) {
-    if (!filterDay) {
-        return;
-    }
-
-    const selectedYear = parseInteger(filterYear ? filterYear.value : '');
-    const selectedMonth = parseInteger(filterMonth ? filterMonth.value : '');
-    const days = getAvailableValues('day', {
-        year: selectedYear,
-        month: selectedMonth,
-        day: null,
-    }).sort(function (a, b) {
-        return b - a;
-    });
-
-    setSelectOptions(filterDay, days, selectedDay);
-}
-
-function ensureOption(selectElement, value, label) {
-    if (!selectElement) {
-        return;
-    }
-
-    const exists = Array.from(selectElement.options).some(function (option) {
-        return option.value === value;
-    });
-
-    if (exists) {
-        return;
-    }
-
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = label;
-    selectElement.appendChild(option);
-}
-
-function setSelectOptions(selectElement, values, selectedValue, labelResolver) {
-    if (!selectElement) {
-        return;
-    }
-
-    selectElement.innerHTML = '';
-
-    if (values.length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = 'Sin fechas';
-        selectElement.appendChild(option);
-        selectElement.value = '';
-        selectElement.disabled = true;
-        return;
-    }
-
-    selectElement.disabled = false;
-
-    values.forEach(function (value) {
-        const option = document.createElement('option');
-        option.value = String(value);
-        option.textContent = typeof labelResolver === 'function' ? labelResolver(value) : String(value);
-        selectElement.appendChild(option);
-    });
-
-    const selectedNumber = parseInteger(selectedValue);
-    const nextValue = selectedNumber !== null && values.includes(selectedNumber)
-        ? selectedNumber
-        : values[0];
-
-    selectElement.value = String(nextValue);
-}
-
 
 function applyDefaultFilterIfNeeded() {
     if (allNews.length === 0) {
@@ -406,11 +682,7 @@ function applyDefaultFilterIfNeeded() {
 }
 
 function hasAnyFilterSelection() {
-    return Boolean(
-        (filterYear && filterYear.value !== '')
-        || (filterMonth && filterMonth.value !== '')
-        || (filterDay && filterDay.value !== '')
-    );
+    return selectedFilterDate !== null;
 }
 
 function setFilterSelection(parts) {
@@ -418,23 +690,11 @@ function setFilterSelection(parts) {
         return;
     }
 
-    if (filterYear) {
-        filterYear.value = String(parts.year);
-    }
-
-    syncDateFilterControls();
-
-    if (filterMonth) {
-        filterMonth.value = String(parts.month);
-    }
-
-    syncDateFilterControls();
-
-    if (filterDay) {
-        filterDay.value = String(parts.day);
-    }
-
-    syncDateFilterControls();
+    selectedFilterDate = toDateKey(parts);
+    calendarView = {
+        year: parts.year,
+        month: parts.month,
+    };
 }
 
 function hasNewsForDate(parts) {
@@ -442,19 +702,30 @@ function hasNewsForDate(parts) {
         return false;
     }
 
-    return allNews.some(function (item) {
-        const dateParts = getDatePartsFromItem(item);
-
-        if (!dateParts) {
-            return false;
-        }
-
-        return dateParts.year === parts.year
-            && dateParts.month === parts.month
-            && dateParts.day === parts.day;
-    });
+    return availableNewsDates.has(toDateKey(parts));
 }
 
+function getEarliestAvailableDateParts() {
+    let earliestDate = null;
+    let earliestDateKey = Number.POSITIVE_INFINITY;
+
+    allNews.forEach(function (item) {
+        const parts = getDatePartsFromItem(item);
+
+        if (!parts) {
+            return;
+        }
+
+        const dateKey = getNumericDateKey(parts);
+
+        if (dateKey < earliestDateKey) {
+            earliestDateKey = dateKey;
+            earliestDate = parts;
+        }
+    });
+
+    return earliestDate;
+}
 function getLatestAvailableDateParts() {
     let latestDate = null;
     let latestDateKey = 0;
@@ -466,7 +737,7 @@ function getLatestAvailableDateParts() {
             return;
         }
 
-        const dateKey = (parts.year * 10000) + (parts.month * 100) + parts.day;
+        const dateKey = getNumericDateKey(parts);
 
         if (dateKey > latestDateKey) {
             latestDateKey = dateKey;
@@ -475,38 +746,6 @@ function getLatestAvailableDateParts() {
     });
 
     return latestDate;
-}
-
-function getAvailableValues(dimension, criteria) {
-    const values = new Set();
-
-    allNews.forEach(function (item) {
-        const parts = getDatePartsFromItem(item);
-
-        if (!parts) {
-            return;
-        }
-
-        if (criteria.year !== null && parts.year !== criteria.year) {
-            return;
-        }
-
-        if (criteria.month !== null && parts.month !== criteria.month) {
-            return;
-        }
-
-        if (criteria.day !== null && parts.day !== criteria.day) {
-            return;
-        }
-
-        const value = parts[dimension];
-
-        if (Number.isInteger(value)) {
-            values.add(value);
-        }
-    });
-
-    return Array.from(values);
 }
 
 function applyFiltersAndRender() {
@@ -538,118 +777,99 @@ function matchesDateFilter(item, filter) {
         return false;
     }
 
-    if (filter.year !== null && parts.year !== filter.year) {
-        return false;
+    if (filter.year === null || filter.month === null || filter.day === null) {
+        return true;
     }
 
-    if (filter.month !== null && parts.month !== filter.month) {
-        return false;
-    }
-
-    if (filter.day !== null && parts.day !== filter.day) {
-        return false;
-    }
-
-    return true;
+    return parts.year === filter.year && parts.month === filter.month && parts.day === filter.day;
 }
 
 function getFilterSelection() {
-    return {
-        year: parseInteger(filterYear ? filterYear.value : ''),
-        month: parseInteger(filterMonth ? filterMonth.value : ''),
-        day: parseInteger(filterDay ? filterDay.value : ''),
-    };
+    const parts = parseDateKey(selectedFilterDate);
+
+    if (!parts) {
+        return {
+            year: null,
+            month: null,
+            day: null,
+        };
+    }
+
+    return parts;
 }
 
 function getTodayParts() {
     return getDatePartsByTimezone(new Date());
 }
 
-function getMaxSelectableDay(year, month) {
-    if (month === null || month < 1 || month > 12) {
-        return DAYS_IN_MONTH;
-    }
-
-    const baseYear = year !== null ? year : 2000;
-    const monthLength = new Date(baseYear, month, 0).getDate();
-    const today = getTodayParts();
-
-    if (today && year !== null && year === today.year && month === today.month) {
-        return Math.min(monthLength, today.day);
-    }
-
-    return monthLength;
-}
-
 function isFutureFilterSelection(filter) {
     const today = getTodayParts();
 
-    if (!today || filter.year === null) {
+    if (!today || filter.year === null || filter.month === null || filter.day === null) {
         return false;
     }
 
-    if (filter.year > today.year) {
-        return true;
-    }
-
-    if (filter.year < today.year || filter.month === null) {
-        return false;
-    }
-
-    if (filter.month > today.month) {
-        return true;
-    }
-
-    if (filter.month < today.month || filter.day === null) {
-        return false;
-    }
-
-    return filter.day > today.day;
+    return getNumericDateKey(filter) > getNumericDateKey(today);
 }
 
-function clampFutureSelection() {
+function getNumericDateKey(parts) {
+    return (parts.year * 10000) + (parts.month * 100) + parts.day;
+}
+
+function toDateKey(parts) {
+    const year = String(parts.year).padStart(4, '0');
+    const month = String(parts.month).padStart(2, '0');
+    const day = String(parts.day).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+function parseDateKey(value) {
+    if (!value) {
+        return null;
+    }
+
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (!match) {
+        return null;
+    }
+
+    return {
+        year: Number.parseInt(match[1], 10),
+        month: Number.parseInt(match[2], 10),
+        day: Number.parseInt(match[3], 10),
+    };
+}
+
+function isFutureDateParts(parts) {
     const today = getTodayParts();
 
     if (!today) {
-        return;
+        return false;
     }
 
-    const selectedYear = parseInteger(filterYear ? filterYear.value : '');
-
-    if (filterYear && selectedYear !== null && selectedYear > today.year) {
-        filterYear.value = String(today.year);
-    }
-
-    const adjustedYear = parseInteger(filterYear ? filterYear.value : '');
-    const selectedMonth = parseInteger(filterMonth ? filterMonth.value : '');
-
-    if (filterMonth && adjustedYear !== null && adjustedYear === today.year && selectedMonth !== null && selectedMonth > today.month) {
-        filterMonth.value = String(today.month);
-    }
-
-    const adjustedMonth = parseInteger(filterMonth ? filterMonth.value : '');
-    const selectedDay = parseInteger(filterDay ? filterDay.value : '');
-
-    if (filterDay
-        && adjustedYear !== null
-        && adjustedYear === today.year
-        && adjustedMonth !== null
-        && adjustedMonth === today.month
-        && selectedDay !== null
-        && selectedDay > today.day) {
-        filterDay.value = String(today.day);
-    }
+    return getNumericDateKey(parts) > getNumericDateKey(today);
 }
 
-function syncDateFilterControls() {
-    const selectedYear = filterYear ? filterYear.value : '';
-    populateYearOptions(selectedYear);
+function isFutureMonth(view) {
+    const today = getTodayParts();
 
-    const selectedMonth = filterMonth ? filterMonth.value : '';
-    populateMonthOptions(selectedMonth);
+    if (!today || !view) {
+        return false;
+    }
 
-    const selectedDay = filterDay ? filterDay.value : '';
-    populateDayOptions(selectedDay);
+    return (view.year * 100 + view.month) > (today.year * 100 + today.month);
+}
+
+function isTodayDateKey(dateKey) {
+    const today = getTodayParts();
+
+    if (!today) {
+        return false;
+    }
+
+    return toDateKey(today) === dateKey;
 }
 function parseInteger(value) {
     const parsed = Number.parseInt(String(value || '').trim(), 10);
@@ -824,12 +1044,4 @@ function setupAutoRefresh() {
 function setupBackToTop() {
     utils.setupBackToTop(backToTopButton);
 }
-
-
-
-
-
-
-
-
 
