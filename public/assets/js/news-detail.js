@@ -54,7 +54,8 @@ async function fetchDetailPayload() {
 
     for (const endpoint of detailEndpointCandidates) {
         try {
-            const response = await fetch(endpoint + (endpoint.indexOf('?') === -1 ? '?' : '&') + '_=' + Date.now(), {
+            const endpointWithAllNews = appendAllNewsLimit(endpoint);
+            const response = await fetch(withCacheBuster(endpointWithAllNews), {
                 cache: 'no-store',
                 headers: {
                     Accept: 'application/json',
@@ -72,6 +73,18 @@ async function fetchDetailPayload() {
     }
 
     throw lastError;
+}
+
+function appendAllNewsLimit(endpoint) {
+    const separator = endpoint.indexOf('?') === -1 ? '?' : '&';
+
+    return endpoint + separator + 'limit=0';
+}
+
+function withCacheBuster(endpoint) {
+    const separator = endpoint.indexOf('?') === -1 ? '?' : '&';
+
+    return endpoint + separator + '_=' + Date.now();
 }
 
 function renderDetail(item) {
