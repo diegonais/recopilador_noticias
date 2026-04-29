@@ -12,39 +12,43 @@ $apiEndpoint = '/api/news.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></title>
-    <meta name="description" content="Portal simple para visualizar noticias recientes de la Agencia Boliviana de Informacion.">
+    <meta name="description" content="Portal editorial de seguimiento actualizado con noticias recientes de la Agencia Boliviana de Informacion.">
     <link rel="stylesheet" href="./assets/css/styles.css">
 </head>
 <body>
+    <header class="site-header">
+        <div class="site-header__main">
+            <div class="site-header__main-inner">
+                <div class="brand">
+                    <div class="brand-mark" aria-hidden="true">ABI</div>
+                    <div>
+                        <h1><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></h1>
+                    </div>
+                </div>
+                <p class="hero-copy">
+                    Monitoreo actualizado de la agenda informativa nacional con acceso r&aacute;pido a publicaciones, fechas y fuentes oficiales.
+                </p>
+            </div>
+        </div>
+    </header>
+
     <div
         class="site-shell"
         data-api-endpoint="<?php echo htmlspecialchars($apiEndpoint, ENT_QUOTES, 'UTF-8'); ?>"
         data-timezone="<?php echo htmlspecialchars($config->timezone(), ENT_QUOTES, 'UTF-8'); ?>"
     >
-        <header class="site-header">
-
-            <div class="brand">
-                <div class="brand-mark" aria-hidden="true">ABI</div>
-                <div>
-                    <h1><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></h1>
-                </div>
-            </div>
-            <p class="hero-copy">
-                Noticias recientes obtenidas de la Agencia Boliviana de Informacion (ABI).
-            </p>
-        </header>
 
         <main class="content">
             <section class="content-head">
                 <div>
-                    <p class="section-kicker">&Uacute;ltimas publicaciones</p>
+                    <p class="section-kicker">Cobertura reciente</p>
                 </div>
                 <p id="last-updated" class="last-updated" aria-live="polite"></p>
             </section>
 
             <div class="toolbar-actions">
                 <button id="filter-toggle" class="filter-toggle" type="button" aria-expanded="false" aria-controls="filters-panel">
-                    Buscar por fecha
+                    Filtrar fecha
                 </button>
                 <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar a tema oscuro" aria-pressed="false">&#9790;</button>
             </div>
@@ -92,41 +96,47 @@ $apiEndpoint = '/api/news.php';
             </section>
 
             <div id="loading-state" class="status-card">
-                <strong>Cargando noticias...</strong>
-                <p>Estamos consultando las noticias almacenadas.</p>
+                <strong>Actualizando cobertura</strong>
+                <p>Sincronizando las publicaciones disponibles.</p>
             </div>
 
             <div id="error-state" class="status-card is-hidden is-error" role="alert">
-                <strong>No fue posible cargar las noticias.</strong>
-                <p>Intenta nuevamente en unos minutos.</p>
+                <strong>No se pudo actualizar el contenido.</strong>
+                <p>Revisa la conexi&oacute;n o intenta nuevamente en unos minutos.</p>
             </div>
 
             <div id="empty-state" class="status-card is-hidden">
-                <strong>Todav&iacute;a no hay noticias disponibles.</strong>
-                <p id="empty-state-message">Cuando el sistema vuelva a actualizarse, las publicaciones apareceran aqui.</p>
+                <strong>No hay publicaciones para mostrar.</strong>
+                <p id="empty-state-message">Las nuevas actualizaciones aparecer&aacute;n en este espacio.</p>
             </div>
 
             <section id="news-list" class="news-grid is-hidden" aria-live="polite" aria-busy="true"></section>
         </main>
 
-        <footer class="site-footer">
-            <div class="site-footer__inner">
-                <div class="site-footer__brand">
-                    <p class="site-footer__label">Recopilador Informativo</p>
-                    <h2 class="site-footer__title"><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></h2>
-                    <p class="site-footer__copy">Cobertura autom&aacute;tica de noticias ABI con visualizaci&oacute;n optimizada para consulta diaria.</p>
-                </div>
-
-                <div class="site-footer__meta" aria-label="Informacion del portal">
-                    <p><span>Fuente ::</span> ABI RSS oficial</p>
-                    <p><span>Frecuencia ::</span> Actualizaci&oacute;n cada 5 minutos</p>
-                    <p><span>Desarrollo ::</span> <?php echo htmlspecialchars($config->footerAuthor(), ENT_QUOTES, 'UTF-8'); ?> | <?php echo date('Y'); ?></p>
-                </div>
-            </div>
-        </footer>
     </div>
 
-    <button id="back-to-top" class="back-to-top" type="button" aria-label="Volver arriba">Subir</button>
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <div class="site-footer__brand">
+                <p class="site-footer__label">Centro informativo</p>
+                <h2 class="site-footer__title"><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></h2>
+                <p class="site-footer__copy">Seguimiento organizado de publicaciones ABI para lectura y consulta diaria.</p>
+            </div>
+
+            <div class="site-footer__meta" aria-label="Informacion del portal">
+                <p><span>Fuente</span> ABI RSS oficial</p>
+                <p><span>Ritmo</span> Actualizaci&oacute;n cada 5 minutos</p>
+                <p><span>Equipo</span> <?php echo htmlspecialchars($config->footerAuthor(), ENT_QUOTES, 'UTF-8'); ?> | <?php echo date('Y'); ?></p>
+            </div>
+        </div>
+    </footer>
+
+    <button id="back-to-top" class="back-to-top" type="button" aria-label="Volver arriba">
+        <svg class="back-to-top__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 19V5"></path>
+            <path d="M5 12l7-7l7 7"></path>
+        </svg>
+    </button>
 
     <noscript>
         <div class="noscript-message">Este portal necesita JavaScript habilitado para mostrar las noticias.</div>

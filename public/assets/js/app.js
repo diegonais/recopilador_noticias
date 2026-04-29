@@ -35,7 +35,7 @@ let selectedFilterDate = null;
 let calendarView = null;
 let availableNewsDates = new Set();
 
-const DEFAULT_EMPTY_MESSAGE = 'Cuando el sistema vuelva a actualizarse, las publicaciones apareceran aqui.';
+const DEFAULT_EMPTY_MESSAGE = 'Las nuevas actualizaciones aparecer\u00e1n en este espacio.';
 const THEME_STORAGE_KEY = 'portal_theme';
 const MONTH_LABELS = {
     1: 'Enero',
@@ -193,7 +193,7 @@ function setupFilterToggle() {
         filtersPanel.classList.toggle('filters-panel--collapsed', !expanded);
         filtersPanel.setAttribute('aria-hidden', expanded ? 'false' : 'true');
         filterToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        filterToggle.textContent = expanded ? 'Ocultar busqueda' : 'Buscar por fecha';
+        filterToggle.textContent = expanded ? 'Cerrar filtro' : 'Filtrar fecha';
 
         if (!expanded) {
             toggleMonthYearPicker(false);
@@ -919,18 +919,18 @@ function getDatePartsByTimezone(date) {
 
 function buildNoResultsMessage(filter) {
     if (isFutureFilterSelection(filter)) {
-        return 'No se pueden buscar noticias en fechas futuras.';
+        return 'Selecciona una fecha disponible en el calendario.';
     }
 
     if (filter.year !== null && filter.month !== null && filter.day !== null) {
         const day = String(filter.day).padStart(2, '0');
         const month = String(filter.month).padStart(2, '0');
 
-        return `No hay noticias para la fecha ${day}/${month}/${filter.year}.`;
+        return `No hay publicaciones registradas para el ${day}/${month}/${filter.year}.`;
     }
 
     if (filter.year !== null || filter.month !== null || filter.day !== null) {
-        return 'No hay noticias que coincidan con los filtros seleccionados.';
+        return 'No hay publicaciones que coincidan con el filtro seleccionado.';
     }
 
     return DEFAULT_EMPTY_MESSAGE;
@@ -952,10 +952,10 @@ function renderNews(news) {
 function createCardMarkup(item) {
     const imageMarkup = item.image
         ? `<img class="news-card__image" src="${utils.escapeAttribute(item.image)}" alt="${utils.escapeAttribute(item.title)}" loading="lazy">`
-        : `<div class="news-card__image news-card__image--placeholder" aria-hidden="true">Sin imagen</div>`;
+        : `<div class="news-card__image news-card__image--placeholder" aria-hidden="true">ABI</div>`;
 
     const detailUrl = buildDetailUrl(item);
-    const shortSummary = truncateText(utils.normalizeArticleText(item.summary || 'Sin resumen disponible.'), 280);
+    const shortSummary = truncateText(utils.normalizeArticleText(item.summary || 'Contenido en actualizaci\u00f3n.'), 280);
 
     return `
         <article class="news-card">
@@ -967,10 +967,10 @@ function createCardMarkup(item) {
                     <span>${utils.escapeHtml(item.source || 'ABI')}</span>
                     <span>${utils.formatDate(item.published_at)}</span>
                 </div>
-                <h3 class="news-card__title">${utils.escapeHtml(item.title || 'Sin titulo')}</h3>
+                <h3 class="news-card__title">${utils.escapeHtml(item.title || 'Publicaci\u00f3n ABI')}</h3>
                 <p class="news-card__summary">${utils.escapeHtml(shortSummary)}</p>
                 <a class="news-card__link" href="${utils.escapeAttribute(detailUrl)}">
-                    Leer mas
+                    Abrir lectura
                 </a>
             </div>
         </article>
@@ -1010,11 +1010,11 @@ function updateLastUpdated(dateString) {
     }
 
     if (!dateString) {
-        lastUpdated.textContent = 'Actualizacion local disponible';
+        lastUpdated.textContent = 'Contenido local disponible';
         return;
     }
 
-    lastUpdated.textContent = `Actualizado: ${utils.formatDate(dateString, true)}`;
+    lastUpdated.textContent = `Actualizado ${utils.formatDate(dateString, true)}`;
 }
 
 function appendAllNewsLimit(endpoint) {

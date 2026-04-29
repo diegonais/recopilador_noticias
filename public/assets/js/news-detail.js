@@ -113,8 +113,8 @@ function renderDetail(item) {
         `
         : '';
 
-    const paragraphs = utils.buildReadableParagraphs(item.summary || 'Sin contenido disponible.');
-    const bodyMarkup = (paragraphs.length > 0 ? paragraphs : ['Sin contenido disponible.'])
+    const paragraphs = utils.buildReadableParagraphs(item.summary || 'Contenido en actualizaci\u00f3n.');
+    const bodyMarkup = (paragraphs.length > 0 ? paragraphs : ['Contenido en actualizaci\u00f3n.'])
         .map(function (paragraph) {
             return `<p class="detail-text">${utils.escapeHtml(paragraph)}</p>`;
         })
@@ -125,24 +125,24 @@ function renderDetail(item) {
             ${imageMarkup}
             <div class="detail-hero__body">
                 <p class="section-kicker">${utils.escapeHtml(item.source || 'ABI')}</p>
-                <h2 class="detail-title">${utils.escapeHtml(item.title || 'Sin titulo')}</h2>
+                <h2 class="detail-title">${utils.escapeHtml(item.title || 'Publicaci\u00f3n ABI')}</h2>
                 <div class="detail-meta">
                     <span>${utils.formatDate(item.published_at, true)}</span>
-                    <span>Fuente oficial ABI</span>
+                    <span>Agencia Boliviana de Informaci\u00f3n</span>
                 </div>
             </div>
         </div>
         <div class="detail-content">
             <div class="detail-body">${bodyMarkup}</div>
             <div class="detail-actions">
-                <a class="detail-action" href="/">Volver al portal</a>
-                <a class="detail-action detail-action--primary" href="${utils.escapeAttribute(item.link || '#')}" target="_blank" rel="noopener noreferrer">Ver fuente original en ABI</a>
+                <a class="detail-action" href="/">Volver</a>
+                <a class="detail-action detail-action--primary" href="${utils.escapeAttribute(item.link || '#')}" target="_blank" rel="noopener noreferrer">Fuente oficial</a>
             </div>
         </div>
         ${imageViewerMarkup}
     `;
 
-    document.title = `${item.title || 'Noticia'} | Portal Noticias ABI`;
+    document.title = `${item.title || 'Publicaci\u00f3n'} | Portal Noticias ABI`;
     setupImageViewer();
 }
 
