@@ -98,11 +98,11 @@ docker exec -it portal-noticias-abi php bin/update-news.php
 Una ejecucion correcta deberia mostrar pasos similares a:
 
 ```text
-[INFO] Solicitando feed RSS de ABI.
-[INFO] Feed RSS de ABI recibido correctamente. obtenidas=10
-[INFO] Guardado en Supabase completado. items=60
-[INFO] Guardado en JSON local completado. items=60
-[OK] resumen obtenidas=10 nuevas=0
+[11/05/2026, 10:15:00 AM] INFO: Solicitando feed RSS de ABI.
+[11/05/2026, 10:15:01 AM] INFO: Feed RSS de ABI recibido correctamente. {"context":{"obtenidas":10}}
+[11/05/2026, 10:15:02 AM] INFO: Guardado en Supabase completado. {"context":{"items":60}}
+[11/05/2026, 10:15:02 AM] INFO: Guardado en JSON local completado. {"context":{"items":60}}
+[11/05/2026, 10:15:02 AM] INFO: Resumen de sincronizacion ABI {"context":{"status":"SUCCEEDED","obtained":10,"new":0}}
 ```
 
 ## Migracion a Supabase

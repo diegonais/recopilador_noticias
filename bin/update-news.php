@@ -10,23 +10,65 @@ try {
     $result = $container->updateNewsUseCase()->execute();
 
     if (($result['message'] ?? null) !== null) {
-        fwrite(STDOUT, '[INFO] ' . $result['message'] . PHP_EOL);
+        fwrite(
+            STDOUT,
+            formatCommandLog(
+                $container->config()->timezone(),
+                'INFO',
+                (string) $result['message'],
+            ) . PHP_EOL
+        );
         exit(0);
     }
 
     fwrite(
         STDOUT,
-        sprintf(
-            '[OK] %s | obtenidas=%d | nuevas=%d | almacenadas=%d%s',
-            DateHelper::nowForLog($container->config()->timezone()),
-            (int) $result['obtained'],
-            (int) $result['new'],
-            (int) $result['stored'],
-            PHP_EOL,
-        )
+        formatCommandLog(
+            $container->config()->timezone(),
+            'INFO',
+            'Sincronizacion ABI finalizada.',
+            [
+                'status' => 'SUCCEEDED',
+                'obtained' => (int) $result['obtained'],
+                'new' => (int) $result['new'],
+                'stored' => (int) $result['stored'],
+            ],
+        ) . PHP_EOL
     );
 } catch (Throwable $exception) {
-    fwrite(STDERR, '[ERROR] ' . $exception->getMessage() . PHP_EOL);
+    fwrite(
+        STDERR,
+        formatCommandLog(
+            $container->config()->timezone(),
+            'ERROR',
+            'Sincronizacion ABI fallida.',
+            [
+                'status' => 'FAILED',
+                'error' => $exception->getMessage(),
+            ],
+        ) . PHP_EOL
+    );
     exit(1);
+}
+
+/**
+ * @param array<string, mixed> $context
+ */
+function formatCommandLog(string $timezone, string $level, string $message, array $context = []): string
+{
+    $line = sprintf(
+        '[%s] %s: %s',
+        DateHelper::nowForConsoleLog($timezone),
+        strtoupper($level),
+        preg_replace('/\s+/', ' ', trim($message)) ?? trim($message),
+    );
+
+    if ($context === []) {
+        return $line;
+    }
+
+    $encoded = json_encode(['context' => $context], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    return $line . ' ' . (is_string($encoded) ? $encoded : '{"context":{}}');
 }
 

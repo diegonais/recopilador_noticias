@@ -64,4 +64,9 @@ final class DateHelper
     {
         return (new DateTimeImmutable('now', new DateTimeZone($timezone)))->format('Y-m-d H:i:s');
     }
+
+    public static function nowForConsoleLog(string $timezone): string
+    {
+        return (new DateTimeImmutable('now', new DateTimeZone($timezone)))->format('d/m/Y, g:i:s A');
+    }
 }

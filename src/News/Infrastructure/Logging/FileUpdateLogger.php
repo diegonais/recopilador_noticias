@@ -21,8 +21,8 @@ final class FileUpdateLogger implements UpdateLoggerInterface
     public function logMessage(string $level, string $message, array $context = []): void
     {
         $line = sprintf(
-            '[%s] [%s] %s',
-            DateHelper::nowForLog($this->config->timezone()),
+            '[%s] %s: %s',
+            DateHelper::nowForConsoleLog($this->config->timezone()),
             strtoupper($level),
             TextHelper::normalizeWhitespace($message),
         );
@@ -36,17 +36,22 @@ final class FileUpdateLogger implements UpdateLoggerInterface
 
     public function logUpdate(int $obtainedCount, int $newCount, ?string $error = null): void
     {
-        $line = sprintf(
-            '[%s] [%s] resumen obtenidas=%d nuevas=%d',
-            DateHelper::nowForLog($this->config->timezone()),
-            $error !== null && trim($error) !== '' ? 'ERROR' : 'OK',
-            $obtainedCount,
-            $newCount,
-        );
+        $context = [
+            'status' => $error !== null && trim($error) !== '' ? 'FAILED' : 'SUCCEEDED',
+            'obtained' => $obtainedCount,
+            'new' => $newCount,
+        ];
 
         if ($error !== null && trim($error) !== '') {
-            $line .= ' error="' . TextHelper::normalizeWhitespace($error) . '"';
+            $context['error'] = $error;
         }
+
+        $line = sprintf(
+            '[%s] %s: Resumen de sincronizacion ABI %s',
+            DateHelper::nowForConsoleLog($this->config->timezone()),
+            $error !== null && trim($error) !== '' ? 'ERROR' : 'INFO',
+            $this->formatContext($context),
+        );
 
         $this->writeLine($line);
     }
@@ -56,32 +61,38 @@ final class FileUpdateLogger implements UpdateLoggerInterface
      */
     private function formatContext(array $context): string
     {
-        $parts = [];
+        $encoded = json_encode(
+            ['context' => $this->normalizeContext($context)],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
+        );
 
-        foreach ($context as $key => $value) {
-            $parts[] = $key . '=' . $this->formatContextValue($value);
-        }
-
-        return implode(' ', $parts);
+        return is_string($encoded) ? $encoded : '{"context":{}}';
     }
 
-    private function formatContextValue(mixed $value): string
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array<string, mixed>
+     */
+    private function normalizeContext(array $context): array
     {
-        if ($value === null) {
-            return 'null';
+        $normalized = [];
+
+        foreach ($context as $key => $value) {
+            $normalized[$key] = $this->normalizeContextValue($value);
         }
 
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
+        return $normalized;
+    }
 
-        if (is_int($value) || is_float($value)) {
-            return (string) $value;
-        }
-
+    private function normalizeContextValue(mixed $value): mixed
+    {
         if (is_array($value)) {
-            $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $value = is_string($encoded) ? $encoded : 'array';
+            return $this->normalizeContext($value);
+        }
+
+        if ($value === null || is_bool($value) || is_int($value) || is_float($value)) {
+            return $value;
         }
 
         $text = TextHelper::normalizeWhitespace((string) $value);
@@ -90,7 +101,7 @@ final class FileUpdateLogger implements UpdateLoggerInterface
             $text = substr($text, 0, 297) . '...';
         }
 
-        return '"' . str_replace('"', '\"', $text) . '"';
+        return $text;
     }
 
     private function writeLine(string $line): void
