@@ -67,6 +67,8 @@ html {
 }
 
 body {
+    display: flex;
+    flex-direction: column;
     margin: 0;
     min-height: 100vh;
     color: var(--text);
@@ -104,6 +106,7 @@ select {
 }
 
 .site-shell {
+    flex: 1 0 auto;
     width: min(calc(100% - 2rem), var(--max-width));
     margin: 0 auto;
     padding: 1.8rem 0 3rem;
@@ -726,7 +729,7 @@ body.theme-dark .news-card__image--placeholder {
 .site-footer {
     position: relative;
     width: 100%;
-    margin-top: 2.4rem;
+    margin-top: auto;
     overflow: hidden;
     border-top: 1px solid var(--header-line);
     color: #e7edf2;
