@@ -73,6 +73,38 @@ Tambien se conserva el wrapper anterior:
 php scripts/update_news.php
 ```
 
+## Monitoreo de logs
+
+Cada sincronizacion escribe en `storage/logs/update.log` el estado del RSS de ABI, la lectura/guardado en Supabase y el respaldo JSON local.
+
+Para ver el log en vivo en Windows/PowerShell:
+
+```powershell
+Get-Content .\storage\logs\update.log -Tail 80 -Wait
+```
+
+Si la aplicacion esta corriendo en Docker:
+
+```bash
+docker exec -it portal-noticias-abi sh -lc "tail -f storage/logs/update.log"
+```
+
+Para probar una sincronizacion manual dentro del contenedor:
+
+```bash
+docker exec -it portal-noticias-abi php bin/update-news.php
+```
+
+Una ejecucion correcta deberia mostrar pasos similares a:
+
+```text
+[INFO] Solicitando feed RSS de ABI.
+[INFO] Feed RSS de ABI recibido correctamente. obtenidas=10
+[INFO] Guardado en Supabase completado. items=60
+[INFO] Guardado en JSON local completado. items=60
+[OK] resumen obtenidas=10 nuevas=0
+```
+
 ## Migracion a Supabase
 
 ```bash

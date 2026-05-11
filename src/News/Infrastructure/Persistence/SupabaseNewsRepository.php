@@ -42,13 +42,17 @@ final class SupabaseNewsRepository implements NewsRepositoryInterface
         );
 
         if (!$response->isSuccessful()) {
-            throw new RuntimeException('No se pudo leer noticias desde Supabase.');
+            throw new RuntimeException(
+                'No se pudo leer noticias desde Supabase. ' . $this->summarizeResponse($response->statusCode(), $response->error(), $response->body())
+            );
         }
 
         $decoded = $this->decodeJson($response->body());
 
         if (!is_array($decoded)) {
-            throw new RuntimeException('La respuesta de Supabase no tiene el formato esperado.');
+            throw new RuntimeException(
+                'La respuesta de Supabase no tiene el formato esperado. ' . $this->summarizeResponse($response->statusCode(), null, $response->body())
+            );
         }
 
         $items = [];
@@ -110,7 +114,9 @@ final class SupabaseNewsRepository implements NewsRepositoryInterface
         );
 
         if ($response->statusCode() < 200 || $response->statusCode() >= 300) {
-            throw new RuntimeException('No se pudo guardar noticias en Supabase.');
+            throw new RuntimeException(
+                'No se pudo guardar noticias en Supabase. ' . $this->summarizeResponse($response->statusCode(), $response->error(), $response->body())
+            );
         }
     }
 
@@ -133,7 +139,9 @@ final class SupabaseNewsRepository implements NewsRepositoryInterface
         );
 
         if (!$response->isSuccessful()) {
-            throw new RuntimeException('No se pudo leer la fecha de actualizacion desde Supabase.');
+            throw new RuntimeException(
+                'No se pudo leer la fecha de actualizacion desde Supabase. ' . $this->summarizeResponse($response->statusCode(), $response->error(), $response->body())
+            );
         }
 
         $decoded = $this->decodeJson($response->body());
@@ -169,6 +177,32 @@ final class SupabaseNewsRepository implements NewsRepositoryInterface
     private function buildTableUrl(): string
     {
         return $this->config->supabaseUrl() . '/rest/v1/' . rawurlencode($this->config->supabaseTable());
+    }
+
+    private function summarizeResponse(int $statusCode, ?string $error, ?string $body): string
+    {
+        $parts = ['status=' . $statusCode];
+
+        if ($error !== null && trim($error) !== '') {
+            $parts[] = 'error="' . $this->compactText($error) . '"';
+        }
+
+        if ($body !== null && trim($body) !== '') {
+            $parts[] = 'body="' . $this->compactText($body) . '"';
+        }
+
+        return implode(' ', $parts);
+    }
+
+    private function compactText(string $value): string
+    {
+        $value = trim(preg_replace('/\s+/', ' ', $value) ?? $value);
+
+        if (strlen($value) > 300) {
+            $value = substr($value, 0, 297) . '...';
+        }
+
+        return str_replace('"', '\"', $value);
     }
 
     /**

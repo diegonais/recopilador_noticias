@@ -81,6 +81,23 @@ final class ApplicationContainer
         });
     }
 
+    public function updateNewsRepository(): NewsRepositoryInterface
+    {
+        return $this->singleton('update_news_repository', function (): NewsRepositoryInterface {
+            $localRepository = $this->jsonNewsRepository();
+
+            if (!$this->config->isSupabaseConfigured()) {
+                return $localRepository;
+            }
+
+            return new SynchronizedNewsRepository(
+                $this->supabaseNewsRepository(),
+                $localRepository,
+                $this->updateLogger(),
+            );
+        });
+    }
+
     public function updateLogger(): FileUpdateLogger
     {
         return $this->singleton(
@@ -131,7 +148,7 @@ final class ApplicationContainer
             'update_news_use_case',
             fn (): UpdateNewsUseCase => new UpdateNewsUseCase(
                 $this->abiFeedClient(),
-                $this->newsRepository(),
+                $this->updateNewsRepository(),
                 $this->newsNormalizer(),
                 $this->updateLogger(),
                 $this->config,
