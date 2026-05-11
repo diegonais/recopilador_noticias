@@ -19,10 +19,15 @@ final class SynchronizedNewsRepository implements NewsRepositoryInterface
     public function findLatest(int $limit): array
     {
         try {
-            return $this->primaryRepository->findLatest($limit);
+            $primaryItems = $this->primaryRepository->findLatest($limit);
+
+            if ($primaryItems !== []) {
+                return $primaryItems;
+            }
         } catch (Throwable) {
-            return $this->fallbackRepository->findLatest($limit);
         }
+
+        return $this->fallbackRepository->findLatest($limit);
     }
 
     public function saveAll(array $items): void

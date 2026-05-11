@@ -32,7 +32,11 @@ final class AbiFeedClient implements NewsSourceInterface
         );
 
         if (!$response->isSuccessful()) {
-            throw new RuntimeException('No se pudo leer el feed RSS de ABI.');
+            throw new RuntimeException(sprintf(
+                'No se pudo leer el feed RSS de ABI. status=%d error=%s',
+                $response->statusCode(),
+                $response->error() ?? 'sin_detalle',
+            ));
         }
 
         $xml = $this->parseXml((string) $response->body());

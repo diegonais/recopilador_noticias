@@ -37,6 +37,46 @@ final class SimpleHttpClient implements HttpClientInterface
         int $connectTimeout,
         int $timeout,
     ): HttpResponse {
+        $response = $this->executeCurlRequest(
+            $method,
+            $url,
+            $headers,
+            $body,
+            $followLocation,
+            $connectTimeout,
+            $timeout,
+            true,
+        );
+
+        if ($this->shouldRetryAbiWithoutPeerVerification($url, $response)) {
+            return $this->executeCurlRequest(
+                $method,
+                $url,
+                $headers,
+                $body,
+                $followLocation,
+                $connectTimeout,
+                $timeout,
+                false,
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param array<int, string> $headers
+     */
+    private function executeCurlRequest(
+        string $method,
+        string $url,
+        array $headers,
+        ?string $body,
+        bool $followLocation,
+        int $connectTimeout,
+        int $timeout,
+        bool $verifyPeer,
+    ): HttpResponse {
         $handle = curl_init($url);
 
         curl_setopt_array($handle, [
@@ -46,6 +86,8 @@ final class SimpleHttpClient implements HttpClientInterface
             CURLOPT_TIMEOUT => $timeout,
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_SSL_VERIFYPEER => $verifyPeer,
+            CURLOPT_SSL_VERIFYHOST => $verifyPeer ? 2 : 0,
         ]);
 
         if ($body !== null) {
@@ -75,6 +117,26 @@ final class SimpleHttpClient implements HttpClientInterface
         ?string $body,
         int $timeout,
     ): HttpResponse {
+        $response = $this->executeStreamRequest($method, $url, $headers, $body, $timeout, true);
+
+        if ($this->shouldRetryAbiWithoutPeerVerification($url, $response)) {
+            return $this->executeStreamRequest($method, $url, $headers, $body, $timeout, false);
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param array<int, string> $headers
+     */
+    private function executeStreamRequest(
+        string $method,
+        string $url,
+        array $headers,
+        ?string $body,
+        int $timeout,
+        bool $verifyPeer,
+    ): HttpResponse {
         $options = [
             'http' => [
                 'method' => $method,
@@ -83,8 +145,8 @@ final class SimpleHttpClient implements HttpClientInterface
                 'header' => implode("\r\n", $headers),
             ],
             'ssl' => [
-                'verify_peer' => true,
-                'verify_peer_name' => true,
+                'verify_peer' => $verifyPeer,
+                'verify_peer_name' => $verifyPeer,
             ],
         ];
 
@@ -99,8 +161,39 @@ final class SimpleHttpClient implements HttpClientInterface
         return new HttpResponse(
             $this->extractStatusCode($responseHeaders),
             is_string($rawBody) ? $rawBody : null,
-            $rawBody === false ? 'stream_request_failed' : null,
+            $rawBody === false ? $this->lastPhpErrorMessage('stream_request_failed') : null,
         );
+    }
+
+    private function shouldRetryAbiWithoutPeerVerification(string $url, HttpResponse $response): bool
+    {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+
+        if (!in_array($host, ['abi.bo', 'www.abi.bo'], true)) {
+            return false;
+        }
+
+        if ($response->statusCode() !== 0) {
+            return false;
+        }
+
+        $error = strtolower((string) $response->error());
+
+        return str_contains($error, 'ssl certificate')
+            || str_contains($error, 'local issuer certificate')
+            || str_contains($error, 'operation failed')
+            || str_contains($error, 'stream_request_failed');
+    }
+
+    private function lastPhpErrorMessage(string $fallback): string
+    {
+        $error = error_get_last();
+
+        if (!is_array($error) || !isset($error['message'])) {
+            return $fallback;
+        }
+
+        return (string) $error['message'];
     }
 
     /**
