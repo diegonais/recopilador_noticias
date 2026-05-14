@@ -9,6 +9,7 @@ final class AppConfig
     public function __construct(
         private readonly string $basePath,
         private readonly string $appName,
+        private readonly string $publicBaseUrl,
         private readonly string $timezone,
         private readonly string $abiRssUrl,
         private readonly int $maxNewsItems,
@@ -27,6 +28,7 @@ final class AppConfig
         $config = new self(
             basePath: $basePath,
             appName: self::envValue('APP_NAME', 'Portal Noticias ABI'),
+            publicBaseUrl: rtrim(self::envValue('APP_PUBLIC_URL', ''), '/'),
             timezone: self::envValue('TIMEZONE', 'America/La_Paz'),
             abiRssUrl: self::envValue('ABI_RSS_URL', 'https://abi.bo/feed/'),
             maxNewsItems: max(1, (int) self::envValue('MAX_NEWS_ITEMS', '60')),
@@ -50,6 +52,11 @@ final class AppConfig
     public function appName(): string
     {
         return $this->appName;
+    }
+
+    public function publicBaseUrl(): string
+    {
+        return $this->publicBaseUrl;
     }
 
     public function timezone(): string
