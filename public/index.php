@@ -29,8 +29,10 @@ function assetUrl(string $path): string
         <div class="site-header__main">
             <div class="site-header__main-inner">
                 <div class="brand">
-                    <div class="brand-mark" aria-hidden="true">ABI</div>
-                    <div>
+                    <div class="brand-mark" aria-hidden="true">
+                        <img class="brand-mark__image" src="<?php echo htmlspecialchars(assetUrl('assets/img/df_noticias_logo.png'), ENT_QUOTES, 'UTF-8'); ?>" alt="">
+                    </div>
+                    <div class="brand__text">
                         <h1><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></h1>
                     </div>
                 </div>
@@ -126,17 +128,15 @@ function assetUrl(string $path): string
 
     <footer class="site-footer">
         <div class="site-footer__inner">
-            <div class="site-footer__brand">
+            <div class="site-footer__info">
                 <p class="site-footer__label">Centro informativo</p>
-                <h2 class="site-footer__title"><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></h2>
                 <p class="site-footer__copy">Seguimiento organizado de publicaciones ABI para lectura y consulta diaria.</p>
             </div>
-
-            <div class="site-footer__meta" aria-label="Informacion del portal">
-                <p><span>Fuente</span> ABI RSS oficial</p>
-                <p><span>Ritmo</span> Actualizaci&oacute;n cada 5 minutos</p>
-                <p><span>Equipo</span> <?php echo htmlspecialchars($config->footerAuthor(), ENT_QUOTES, 'UTF-8'); ?> | <?php echo date('Y'); ?></p>
-            </div>
+            <p class="site-footer__credit">
+                Dise&ntilde;ado y desarrollado por
+                <a href="https://diegonais.vercel.app" target="_blank" rel="noopener noreferrer"><?php echo htmlspecialchars($config->footerAuthor(), ENT_QUOTES, 'UTF-8'); ?></a>
+                - <?php echo date('Y'); ?>
+            </p>
         </div>
     </footer>
 
