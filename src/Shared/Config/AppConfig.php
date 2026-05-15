@@ -28,7 +28,7 @@ final class AppConfig
         $config = new self(
             basePath: $basePath,
             appName: self::envValue('APP_NAME', 'Portal Noticias ABI'),
-            publicBaseUrl: rtrim(self::envValue('APP_PUBLIC_URL', ''), '/'),
+            publicBaseUrl: rtrim(self::envValue('APP_PUBLIC_URL', self::envValue('APP_URL', '')), '/'),
             timezone: self::envValue('TIMEZONE', 'America/La_Paz'),
             abiRssUrl: self::envValue('ABI_RSS_URL', 'https://abi.bo/feed/'),
             maxNewsItems: max(1, (int) self::envValue('MAX_NEWS_ITEMS', '60')),

@@ -182,11 +182,13 @@ function renderDetail(item) {
 
 function buildShareLinks(item) {
     const detailUrl = buildShareUrlForItem(item);
+    const title = item && item.title ? String(item.title).trim() : '';
+    const whatsappText = title ? `${title}\n${detailUrl}` : detailUrl;
 
     return {
         x: `https://twitter.com/intent/tweet?url=${encodeURIComponent(detailUrl)}`,
         facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(detailUrl)}`,
-        whatsapp: `https://wa.me/?text=${encodeURIComponent(detailUrl)}`,
+        whatsapp: `https://wa.me/?text=${encodeURIComponent(whatsappText)}`,
     };
 }
 
@@ -347,7 +349,7 @@ function setupShareToggle() {
 
     copyLinkButton.addEventListener('click', async function () {
         try {
-            await copyTextToClipboard(buildShareUrlForItem(currentDetailItem));
+            await copyShareLink(currentDetailItem);
 
             setCopyLabel('Vinculo copiado', true);
             clearTimeout(copyResetTimer);
@@ -391,6 +393,57 @@ async function copyTextToClipboard(value) {
 
     if (!wasCopied) {
         throw new Error('execCommand copy failed');
+    }
+}
+
+async function copyShareLink(item) {
+    const url = buildShareUrlForItem(item);
+    const title = item && item.title ? String(item.title).trim() : url;
+    const image = normalizeShareImageUrl(item && item.image ? item.image : '');
+
+    if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem && window.isSecureContext) {
+        const safeUrl = utils.escapeHtml(url);
+        const safeTitle = utils.escapeHtml(title);
+        const safeImage = utils.escapeHtml(image);
+        const imageMarkup = safeImage
+            ? `<img src="${safeImage}" alt="" style="display:block;width:100%;height:auto;max-height:260px;object-fit:cover;">`
+            : '';
+        const html = `<a href="${safeUrl}" style="display:block;max-width:520px;border:1px solid #ded6cc;border-radius:10px;overflow:hidden;color:#1d242c;text-decoration:none;font-family:Arial,sans-serif;background:#ffffff;">${imageMarkup}<span style="display:block;padding:14px 16px;font-size:18px;font-weight:700;line-height:1.35;">${safeTitle}</span><span style="display:block;padding:0 16px 14px;color:#5d6b78;font-size:13px;line-height:1.4;">${safeUrl}</span></a>`;
+
+        try {
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    'text/plain': new Blob([url], { type: 'text/plain' }),
+                    'text/html': new Blob([html], { type: 'text/html' }),
+                }),
+            ]);
+            return;
+        } catch (error) {
+        }
+    }
+
+    await copyTextToClipboard(url);
+}
+
+function normalizeShareImageUrl(url) {
+    const value = String(url || '').trim();
+
+    if (!value) {
+        return '';
+    }
+
+    if (/^https?:\/\//i.test(value)) {
+        return value;
+    }
+
+    if (value.indexOf('//') === 0) {
+        return `${window.location.protocol}${value}`;
+    }
+
+    try {
+        return new URL(value, window.location.origin).href;
+    } catch (error) {
+        return '';
     }
 }
 
