@@ -151,16 +151,6 @@ function renderDetail(item) {
                         <div class="detail-share__panel" id="detail-share-options" data-share-panel>
                             <button class="detail-share__copy" type="button" data-copy-link>Copiar vinculo</button>
                             <div class="detail-share__actions">
-                                <a class="detail-share__button detail-share__button--facebook" href="${utils.escapeAttribute(shareLinks.facebook)}" target="_blank" rel="noopener noreferrer" aria-label="Compartir en Facebook">
-                                    <svg class="detail-share__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                        <path d="M13.5 21v-8.25h2.775l.39-3h-3.165V7.83c0-.855.255-1.44 1.47-1.44H16.8V3.705c-.315-.045-1.395-.135-2.64-.135-2.61 0-4.41 1.62-4.41 4.59v1.59H7v3h2.745V21h3.755z"></path>
-                                    </svg>
-                                </a>
-                                <a class="detail-share__button detail-share__button--x" href="${utils.escapeAttribute(shareLinks.x)}" target="_blank" rel="noopener noreferrer" aria-label="Compartir en X">
-                                    <svg class="detail-share__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zM17.083 19.77h1.833L7.084 4.126H5.117z"></path>
-                                    </svg>
-                                </a>
                                 <a class="detail-share__button detail-share__button--whatsapp" href="${utils.escapeAttribute(shareLinks.whatsapp)}" target="_blank" rel="noopener noreferrer" aria-label="Compartir en WhatsApp">
                                     <svg class="detail-share__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                                         <path d="M12 2.04C6.5 2.04 2.04 6.5 2.04 12c0 1.76.46 3.48 1.33 5L2 22l5.18-1.35A9.93 9.93 0 0 0 12 21.96c5.5 0 9.96-4.46 9.96-9.96S17.5 2.04 12 2.04zm0 18.1c-1.5 0-2.96-.4-4.24-1.14l-.3-.18-3.08.8.82-3-.2-.31A8.13 8.13 0 0 1 3.86 12c0-4.48 3.66-8.14 8.14-8.14s8.14 3.66 8.14 8.14-3.66 8.14-8.14 8.14zm4.46-6.1c-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.02-.37-1.94-1.2-.72-.64-1.2-1.44-1.34-1.68-.14-.24-.02-.36.1-.48.1-.1.24-.26.36-.38.12-.12.16-.2.24-.34.08-.14.04-.26-.02-.38-.06-.12-.54-1.3-.74-1.78-.2-.48-.4-.42-.54-.42h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2 0 1.18.86 2.32.98 2.48.12.16 1.7 2.6 4.12 3.64.58.26 1.04.42 1.4.54.58.18 1.1.16 1.52.1.46-.06 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28z"></path>
@@ -186,8 +176,6 @@ function buildShareLinks(item) {
     const whatsappText = title ? `${title}\n${detailUrl}` : detailUrl;
 
     return {
-        x: `https://twitter.com/intent/tweet?url=${encodeURIComponent(detailUrl)}`,
-        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(detailUrl)}`,
         whatsapp: `https://wa.me/?text=${encodeURIComponent(whatsappText)}`,
     };
 }

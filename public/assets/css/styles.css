@@ -1173,14 +1173,6 @@ body.theme-dark .news-card__image--placeholder {
     fill: currentColor;
 }
 
-.detail-share__button--x {
-    background: #0f1419;
-}
-
-.detail-share__button--facebook {
-    background: #1877f2;
-}
-
 .detail-share__button--whatsapp {
     background: #25d366;
 }
