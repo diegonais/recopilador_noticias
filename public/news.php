@@ -43,7 +43,7 @@ $metaTitle = $newsItem instanceof NewsItem
     ? $newsItem->title() . ' | ' . $config->appName()
     : 'Detalle de noticia | ' . $config->appName();
 $metaDescription = buildMetaDescription($newsItem);
-$metaImage = $newsItem instanceof NewsItem ? toAbsoluteUrl($newsItem->image(), $currentUrl) : '';
+$metaImage = $newsItem instanceof NewsItem ? buildShareImageUrl($currentUrl, $canonicalId, $newsItem) : '';
 $metaType = $newsItem instanceof NewsItem ? 'article' : 'website';
 $metaTwitterCard = $metaImage !== '' ? 'summary_large_image' : 'summary';
 $metaPublishedAt = $newsItem instanceof NewsItem ? trim($newsItem->publishedAt()) : '';
@@ -324,6 +324,33 @@ function toAbsoluteUrl(string $value, string $currentUrl): string
     }
 
     return $origin . '/' . ltrim($url, '/');
+}
+
+function buildShareImageUrl(string $currentUrl, string $newsId, ?NewsItem $item): string
+{
+    if (!$item instanceof NewsItem || trim($item->image()) === '') {
+        return '';
+    }
+
+    $parsed = parse_url($currentUrl);
+
+    if (!is_array($parsed)) {
+        return '';
+    }
+
+    $origin = buildOriginFromParsedUrl($parsed);
+
+    if ($origin === '') {
+        return '';
+    }
+
+    $path = isset($parsed['path']) && is_string($parsed['path']) && $parsed['path'] !== ''
+        ? $parsed['path']
+        : '/news.php';
+    $directory = str_replace('\\', '/', dirname($path));
+    $directory = $directory === '/' || $directory === '.' ? '' : rtrim($directory, '/');
+
+    return $origin . $directory . '/share-image.php?id=' . rawurlencode($newsId);
 }
 
 function buildOriginFromParsedUrl(array $parsed): string

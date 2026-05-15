@@ -218,53 +218,16 @@ function getCurrentDetailUrl(item) {
         ? String(detailShell.dataset.shareUrl || '').trim()
         : '';
 
-    if (configuredShareUrl && !isLocalhostLikeUrl(configuredShareUrl)) {
+    if (configuredShareUrl) {
         return configuredShareUrl;
-    }
-
-    if (configuredShareUrl && isLocalhostLikeUrl(configuredShareUrl)) {
-        const sourceLink = item && item.link ? String(item.link).trim() : '';
-        if (sourceLink && !isLocalhostLikeUrl(sourceLink)) {
-            return sourceLink;
-        }
     }
 
     try {
         const currentUrl = new URL(window.location.href);
         currentUrl.hash = '';
-        if (isLocalhostLikeUrl(currentUrl.toString())) {
-            const sourceLink = item && item.link ? String(item.link).trim() : '';
-            if (sourceLink && !isLocalhostLikeUrl(sourceLink)) {
-                return sourceLink;
-            }
-        }
         return currentUrl.toString();
     } catch (error) {
-        const sourceLink = item && item.link ? String(item.link).trim() : '';
-        if (sourceLink && !isLocalhostLikeUrl(sourceLink)) {
-            return sourceLink;
-        }
         return window.location.href;
-    }
-}
-
-function isLocalhostLikeUrl(value) {
-    const url = String(value || '').trim();
-
-    if (!url) {
-        return false;
-    }
-
-    try {
-        const parsed = new URL(url, window.location.origin);
-        const hostname = String(parsed.hostname || '').toLowerCase();
-
-        return hostname === 'localhost'
-            || hostname === '127.0.0.1'
-            || hostname === '::1'
-            || hostname.endsWith('.localhost');
-    } catch (error) {
-        return false;
     }
 }
 
@@ -399,7 +362,7 @@ async function copyTextToClipboard(value) {
 async function copyShareLink(item) {
     const url = buildShareUrlForItem(item);
     const title = item && item.title ? String(item.title).trim() : url;
-    const image = normalizeShareImageUrl(item && item.image ? item.image : '');
+    const image = buildShareImageUrlForItem(item, url);
 
     if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem && window.isSecureContext) {
         const safeUrl = utils.escapeHtml(url);
@@ -444,6 +407,30 @@ function normalizeShareImageUrl(url) {
         return new URL(value, window.location.origin).href;
     } catch (error) {
         return '';
+    }
+}
+
+function buildShareImageUrlForItem(item, detailUrl) {
+    if (!item || !item.image) {
+        return '';
+    }
+
+    try {
+        const parsed = new URL(detailUrl, window.location.origin);
+        const id = item.guid || item.link || item.title || parsed.searchParams.get('id') || '';
+
+        if (!id) {
+            return normalizeShareImageUrl(item.image);
+        }
+
+        parsed.pathname = parsed.pathname.replace(/\/[^/]*$/, '/share-image.php') || '/share-image.php';
+        parsed.search = '';
+        parsed.searchParams.set('id', id);
+        parsed.hash = '';
+
+        return parsed.toString();
+    } catch (error) {
+        return normalizeShareImageUrl(item.image);
     }
 }
 

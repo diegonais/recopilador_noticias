@@ -49,6 +49,7 @@ El archivo `.env` permite ajustar opciones basicas:
 
 ```env
 APP_NAME="Portal Noticias ABI"
+APP_PUBLIC_URL="https://tu-dominio.com"
 TIMEZONE="America/La_Paz"
 ABI_RSS_URL="https://abi.bo/feed/"
 MAX_NEWS_ITEMS=60
@@ -58,6 +59,8 @@ SUPABASE_URL="https://tu-proyecto.supabase.co"
 SUPABASE_SERVICE_ROLE_KEY="tu-service-role-key"
 SUPABASE_TABLE="news"
 ```
+
+`APP_PUBLIC_URL` debe apuntar a la URL publica real del portal, preferiblemente con HTTPS. Es importante para que Facebook, WhatsApp, X y otros servicios puedan leer correctamente los metadatos Open Graph y la imagen de cada noticia al compartir enlaces.
 
 Si `SUPABASE_ENABLED=true`, el sistema intentara leer desde Supabase y mantener `storage/news.json` como respaldo local sincronizado.
 
