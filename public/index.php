@@ -5,6 +5,15 @@ declare(strict_types=1);
 $container = require __DIR__ . '/../bootstrap/app.php';
 $config = $container->config();
 $apiEndpoint = '/api/news.php';
+
+function assetUrl(string $path): string
+{
+    $normalizedPath = ltrim($path, '/');
+    $fullPath = __DIR__ . '/' . $normalizedPath;
+    $version = is_file($fullPath) ? (string) filemtime($fullPath) : '1';
+
+    return './' . $normalizedPath . '?v=' . rawurlencode($version);
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -13,7 +22,7 @@ $apiEndpoint = '/api/news.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($config->appName(), ENT_QUOTES, 'UTF-8'); ?></title>
     <meta name="description" content="Portal editorial de seguimiento actualizado con noticias recientes de la Agencia Boliviana de Informacion.">
-    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(assetUrl('assets/css/styles.css'), ENT_QUOTES, 'UTF-8'); ?>">
 </head>
 <body>
     <header class="site-header">
@@ -142,8 +151,8 @@ $apiEndpoint = '/api/news.php';
         <div class="noscript-message">Este portal necesita JavaScript habilitado para mostrar las noticias.</div>
     </noscript>
 
-    <script src="./assets/js/news-shared.js" defer></script>
-    <script src="./assets/js/app.js" defer></script>
+    <script src="<?php echo htmlspecialchars(assetUrl('assets/js/news-shared.js'), ENT_QUOTES, 'UTF-8'); ?>" defer></script>
+    <script src="<?php echo htmlspecialchars(assetUrl('assets/js/app.js'), ENT_QUOTES, 'UTF-8'); ?>" defer></script>
 </body>
 </html>
 

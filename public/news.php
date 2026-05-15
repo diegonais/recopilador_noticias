@@ -15,6 +15,15 @@ $currentUrl = buildCurrentUrl($publicBaseUrl);
 $canonicalId = $newsId;
 $newsItem = null;
 
+function assetUrl(string $path): string
+{
+    $normalizedPath = ltrim($path, '/');
+    $fullPath = __DIR__ . '/' . $normalizedPath;
+    $version = is_file($fullPath) ? (string) filemtime($fullPath) : '1';
+
+    return './' . $normalizedPath . '?v=' . rawurlencode($version);
+}
+
 if ($newsId !== '') {
     try {
         $newsItem = resolveNewsItem($container->jsonNewsRepository()->findLatest(PHP_INT_MAX), $newsId);
@@ -415,7 +424,7 @@ function firstForwardedValue(?string $value): string
     <meta name="twitter:image:alt" content="<?php echo htmlspecialchars($metaTitle, ENT_QUOTES, 'UTF-8'); ?>">
 <?php endif; ?>
 
-    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(assetUrl('assets/css/styles.css'), ENT_QUOTES, 'UTF-8'); ?>">
 </head>
 <body>
     <header class="site-header detail-header">
@@ -477,7 +486,7 @@ function firstForwardedValue(?string $value): string
         </svg>
     </button>
 
-    <script src="./assets/js/news-shared.js" defer></script>
-    <script src="./assets/js/news-detail.js" defer></script>
+    <script src="<?php echo htmlspecialchars(assetUrl('assets/js/news-shared.js'), ENT_QUOTES, 'UTF-8'); ?>" defer></script>
+    <script src="<?php echo htmlspecialchars(assetUrl('assets/js/news-detail.js'), ENT_QUOTES, 'UTF-8'); ?>" defer></script>
 </body>
 </html>

@@ -1,16 +1,36 @@
 window.NewsPortalUtils = (function () {
     function normalizeArticleText(text) {
-        return String(text || '')
+        const cleaned = String(text || '')
             .replace(/\s+(?:(?:\/\/?[A-Z]{2,6}\/\/?)|(?:[A-Za-z]{2,6}(?:\/[A-Za-z]{2,6})*))?\s*Navegaci\S*\s+de\s+entradas[\s\S]*$/iu, '')
-            .replace(/\s*\.?\s*(?=[\/A-Za-z]*\/)(?:\/{0,3}[A-Za-z]{2,6}(?:\/[A-Za-z]{2,6})*\/{0,3})\s*$/u, '')
-            .replace(/\s+/g, ' ')
+            .replace(/\s*\.?\s*(?=[\/A-Za-z]*\/)(?:\/{0,3}[A-Za-z]{2,6}(?:\/[A-Za-z]{2,6})*\/{0,3})\s*$/u, '');
+
+        return normalizeReadableWhitespace(fixPastedTextBoundaries(cleaned));
+    }
+
+    function normalizeReadableWhitespace(text) {
+        return String(text || '')
+            .replace(/\r\n?/g, '\n')
+            .replace(/[^\S\n]+/g, ' ')
+            .replace(/ *\n */g, '\n')
+            .replace(/\n{3,}/g, '\n\n')
+            .split('\n')
+            .map(function (line) {
+                return line.trim();
+            })
+            .join('\n')
             .trim();
     }
 
+    function fixPastedTextBoundaries(text) {
+        return String(text || '')
+            .replace(/(\p{Ll})((?:En|El|La|Los|Las|Un|Una|Durante|Asimismo|También|Segun|Según|Por|Para|Con|Sin|Este|Esta|Estos|Estas)\b)/gu, '$1. $2')
+            .replace(/(\p{Ll})\s+((?:En|El|La|Los|Las|Un|Una|Durante|Asimismo|También|Segun|Según|Por|Para|Con|Sin|Este|Esta|Estos|Estas)\b)/gu, '$1. $2')
+            .replace(/(\p{Ll})([\p{Lu}]{2,})(?=\s|$)/gu, '$1. $2')
+            .replace(/([.!?])(\p{Lu})/gu, '$1 $2');
+    }
+
     function buildReadableParagraphs(text) {
-        const normalized = normalizeArticleText(text)
-            .replace(/\r\n?/g, '\n')
-            .trim();
+        const normalized = normalizeArticleText(text);
 
         if (!normalized) {
             return [];
@@ -46,6 +66,13 @@ window.NewsPortalUtils = (function () {
                     return;
                 }
 
+                if (currentParagraph && isLikelySubheading(currentParagraph)) {
+                    paragraphs.push(currentParagraph.trim());
+                    currentParagraph = cleanSentence;
+                    sentenceCounter = 1;
+                    return;
+                }
+
                 const candidate = currentParagraph
                     ? `${currentParagraph} ${cleanSentence}`
                     : cleanSentence;
@@ -70,6 +97,20 @@ window.NewsPortalUtils = (function () {
         });
 
         return paragraphs.filter(Boolean);
+    }
+
+    function isLikelySubheading(text) {
+        const clean = String(text || '').replace(/[.!?]+$/g, '').trim();
+
+        if (clean.length < 24 || clean.length > 120) {
+            return false;
+        }
+
+        if (/[,:;"“”¿?]/.test(clean)) {
+            return false;
+        }
+
+        return clean.split(/\s+/).length <= 12;
     }
 
     function formatDate(dateString, withTime) {
